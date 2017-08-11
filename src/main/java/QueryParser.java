@@ -33,7 +33,8 @@ public class QueryParser {
      *
      * @param flags the flags that you want to add
      * @return this
-     * @throws NullPointerException if <tt>flags</tt> are null
+     * @throws NullPointerException  if <tt>flags</tt> are null
+     * @throws IllegalStateException if query parser is not empty and this manipulation has effect
      */
     public QueryParser addFlags(Flag... flags) {
         if (flags == null)
@@ -41,6 +42,12 @@ public class QueryParser {
         for (Flag flag : flags)
             if (flag == null)
                 throw new NullPointerException("flag should not be null");
+
+        if (!isEmpty())
+            if (flags.length > 0)
+                for (Flag flag : flags)
+                    if (!containsFlag(flag))
+                        throw new IllegalStateException("query parser is not empty");
 
         this.flags.addAll(Arrays.asList(flags));
 
@@ -50,10 +57,12 @@ public class QueryParser {
     /**
      * Removes <tt>flags</tt>
      * Should be used before {@link #parse}.
+     * If used without argument then removes all flags.
      *
      * @param flags the flags that you want to remove
      * @return this
-     * @throws NullPointerException if <tt>flags</tt> are null
+     * @throws NullPointerException  if <tt>flags</tt> are null
+     * @throws IllegalStateException if query parser is not empty and this manipulation has effect
      */
     public QueryParser removeFlags(Flag... flags) {
         if (flags == null)
@@ -62,7 +71,21 @@ public class QueryParser {
             if (flag == null)
                 throw new NullPointerException("flag should not be null");
 
-        this.flags.removeAll(Arrays.asList(flags));
+        if (isEmpty()) {
+            if (flags.length == 0) {
+                if (!this.flags.isEmpty())
+                    throw new IllegalStateException("query parser is not empty");
+            } else {
+                for (Flag flag : flags)
+                    if (containsFlag(flag))
+                        throw new IllegalStateException("query parser is not empty");
+            }
+        }
+
+        if (flags.length == 0)
+            this.flags.clear();
+        else
+            this.flags.removeAll(Arrays.asList(flags));
 
         return this;
     }
@@ -76,6 +99,19 @@ public class QueryParser {
      * @throws IllegalArgumentException when query has invalid characters
      */
     private void checkCharacters(String query) {
+        // code ...
+        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+            if (query.contains(" "))
+                throw new IllegalArgumentException("query string contains unencoded white space");
+    }
+
+    /**
+     * Checks encoded characters for bad structure
+     *
+     * @throws IllegalArgumentException if encoded characters have bad structure
+     */
+    private void checkEncodedCharacters() {
+        // code ...
     }
 
     /**
@@ -89,6 +125,7 @@ public class QueryParser {
      * @throws IllegalArgumentException when query has invalid structure
      */
     private void checkStructure(String query) {
+        // code ...
     }
 
     /**
@@ -100,37 +137,97 @@ public class QueryParser {
      * @return this
      */
     public QueryParser parse(String query) {
+        if (!isEmpty())
+            throw new IllegalStateException("query parser is not empty");
+
         if (query == null)
             throw new NullPointerException("query string should not be null");
         checkCharacters(query);
+        checkEncodedCharacters();
         checkStructure(query);
+
         // Parsing ...
 
         if (containsFlag(Flag.IGNORE_WHITE_SPACE))
             ignoreWhiteSpace();
+
+        convertEncodedCharacters();
+
+        if (containsFlag(Flag.HARD_IGNORE_WHITE_SPACE))
+            ignoreWhiteSpace();
+
         if (containsFlag(Flag.MERGE_VALUES))
             mergeValues();
+
         if (containsFlag(Flag.CONVERT_TO_NULL))
             convertToNull();
+
+        removeEmptyKeyToNullMaps();
 
         return this;
     }
 
-    public boolean containsKey(String key) {
+    /**
+     * Cleans QueryParse
+     */
+    public QueryParser clear() {
+        // code ...
+        return this;
+    }
+
+    public boolean isEmpty() {
+        return true;
+    }
+
+    /**
+     * Converts encoded characters with % to unencoded characters
+     */
+    private void convertEncodedCharacters() {
+
+    }
+
+    /**
+     * Checks key for bad structure or illegal characters
+     *
+     * @param key key that we want to check
+     * @throws NullPointerException     if key is null
+     * @throws IllegalArgumentException if key has illegal characters
+     */
+    private void checkKey(String key) {
         if (key == null)
             throw new NullPointerException("key can not be null");
+        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+            if (key.contains(" "))
+                throw new IllegalArgumentException("key can not include unencoded white space");
+        // Code ...
+    }
+
+    /**
+     * Checks if QueryParser contains a specified key
+     *
+     * @param key key that we want to check
+     * @return if QueryParser contains the specified key
+     */
+    public boolean containsKey(String key) {
+        checkKey(key);
         // Code ...
         return false;
     }
 
+    /**
+     * @return set of keys
+     */
     public Set<String> getKeys() {
         // Code ...
         return null;
     }
 
+    /**
+     * @param key the key that we want to get values for that key
+     * @return list of values for a specified key
+     */
     public List<String> getValues(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
+        checkKey(key);
         // Code ...
         return null;
     }
@@ -143,6 +240,13 @@ public class QueryParser {
      * This Also makes Set of white Spaces between words to a single space.
      */
     private void ignoreWhiteSpace() {
+        // code ...
+    }
+
+    private String ignoreWhiteSpace(String str) {
+        while (str.contains("  "))
+            str = str.replace("  ", " ");
+        return str.trim();
     }
 
     /**
@@ -150,6 +254,7 @@ public class QueryParser {
      * Also note that: (null is equal to null) but ("" is not equal to null)
      */
     private void mergeValues() {
+        // code ...
     }
 
     /**
@@ -157,6 +262,15 @@ public class QueryParser {
      * But does not manipulate keys.
      */
     private void convertToNull() {
+        // code ...
+    }
+
+    /**
+     * Removes empty string to null mapping
+     * (for example in parse("") we have one)
+     */
+    private void removeEmptyKeyToNullMaps() {
+        //code ...
     }
 
     /**

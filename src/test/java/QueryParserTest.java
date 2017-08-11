@@ -1,4 +1,5 @@
 import org.junit.Before;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.theories.DataPoints;
@@ -8,19 +9,22 @@ import org.junit.experimental.theories.Theory;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
+import org.junit.runners.MethodSorters;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 @RunWith(Theories.class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueryParserTest {
-    @DataPoints("Query Strings With Illegal Characters")
-    public static final List<String> QUERY_STRING_WITH_ILLEGAL_CHARACTERS = Arrays.asList(
-            "?key=value", "\\", "key=value#", "key=value\n");
+    @DataPoints("QueryStringsWithIllegalCharacters")
+    public static String[] QUERY_STRING_WITH_ILLEGAL_CHARACTERS = new String[]
+            {"?key=value", "\\", "key=value#", "key=value\n"};
+    @DataPoints("IllegalKeyStrings")
+    public static String[] ILLEGAL_KEY_STRINGS = new String[]
+            {"?key", "key&key", "key\n", "key\\"};
     @Rule
     public Timeout globalTimeout = new Timeout(1, TimeUnit.MINUTES);
     @Rule
@@ -76,7 +80,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenObjectWithSomeFlagsWhenRemovingSomeFlagsThenObjectDoesNotContainThem() throws Exception {
+    public void GivenQueryParserWithSomeFlagsWhenRemovingSomeFlagsThenObjectDoesNotContainThem() throws Exception {
         assertThat(qParser
                 .addFlags(QueryParser.Flag.MERGE_VALUES, QueryParser.Flag.CONVERT_TO_NULL)
                 .removeFlags(QueryParser.Flag.IGNORE_WHITE_SPACE, QueryParser.Flag.CONVERT_TO_NULL)
@@ -92,7 +96,7 @@ public class QueryParserTest {
 
     @Theory
     public void WhenParsingQueryStringWithInvalidCharactersThenThrowsIllegalArgumentException
-            (@FromDataPoints("Query Strings With Illegal Characters") String str) throws Exception {
+            (@FromDataPoints("QueryStringsWithIllegalCharacters") String str) throws Exception {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("query string has invalid characters");
         qParser.parse(str);
@@ -168,7 +172,7 @@ public class QueryParserTest {
     public void WhenParsingAQueryStringThenKeyCollectionIsCollectionOfKeysSpecified() throws Exception {
         qParser.parse("key1=value1&key1&key1=&key2=value2&&=");
         assertThat(qParser.getKeys(), hasItems("key1", "key2", ""));
-        assertThat(qParser.getKeys(), hasItem(not("key1 "))); // "key1" with space
+        assertThat(qParser.getKeys(), hasItem(not("key3")));
         assertThat(qParser.getKeys().size(), is(3));
     }
 
@@ -200,5 +204,100 @@ public class QueryParserTest {
     public void GivenQueryParserWithProperFlagsWhenRemovingProperThenNothingIsThrown() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenGettingValuesForAKeyWithWhiteSpaceThenThrowsException()
+            throws Exception {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("key can not include unencoded white space");
+        qParser.getValues("key ");
+    }
+
+    @Test
+    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenCheckingIfAKeyWithWhiteSpaceExistsThenThrowsException()
+            throws Exception {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("key can not include unencoded white space");
+        qParser.containsKey("key ");
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToAddAFlagThenThrowsIllegalStateException() throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("query parser is not empty");
+        qParser.parse("key=value")
+                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToRemoveAFlagThenThrowsIllegalStateException() throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("query parser is not empty");
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("key=value")
+                .removeFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToRemoveAllFlagsThenThrowsIllegalStateException() throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("query parser is not empty");
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("key=value")
+                .removeFlags();
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToAddAFlagWithoutEffectThenNothingIsThrown() throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("key=value")
+                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToRemoveAFlagWithoutEffectThenNothingIsThrown() throws Exception {
+        qParser.parse("key=value")
+                .removeFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenWantToRemoveAllFlagsWithoutEffectThenNothingIsThrown() throws Exception {
+        qParser.parse("key=value")
+                .removeFlags();
+    }
+
+    @Test
+    public void GivenEmptyQueryParserThenItIsEmpty() throws Exception {
+        assertThat(qParser.isEmpty(), is(true));
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserThenItIsNotEmpty() throws Exception {
+        assertThat(qParser.parse("key=value").isEmpty(), is(false));
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenParsingAnotherQueryThenItThrowsIllegalStateException() throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("query parser is not empty");
+        qParser.parse("key=value")
+                .parse("key=value");
+    }
+
+    @Theory
+    public void WhenCheckingIllegalKeyStringsThenItThrowsIllegalArgumentException
+            (@FromDataPoints("IllegalKeyStrings") String key) throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("key string is illegal");
+        qParser.containsKey(key);
+    }
+
+    @Theory
+    public void WhenGettingValuesForIllegalKeyStringsThenItThrowsIllegalArgumentException
+            (@FromDataPoints("Illegal Key Strings") String key) throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("key string is illegal");
+        qParser.getValues(key);
     }
 }
