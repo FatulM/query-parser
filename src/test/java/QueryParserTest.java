@@ -11,6 +11,9 @@ import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -105,7 +108,7 @@ public class QueryParserTest {
     @Test
     public void WhenParsingBadStructuredQueryStringThenThrowsIllegalArgumentException() throws Exception {
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("query string is bad structured");
+        thrown.expectMessage("query string has bad structure");
         qParser.parse("key1=value1&key2=value2=value3&key3=value4");
     }
 
@@ -165,15 +168,15 @@ public class QueryParserTest {
 
     @Test
     public void GivenAnEmptyQueryParserThenKeyCollectionIsEmpty() throws Exception {
-        assertThat(qParser.getKeys().isEmpty(), is(true));
+        assertThat(qParser.getKeySet().isEmpty(), is(true));
     }
 
     @Test
     public void WhenParsingAQueryStringThenKeyCollectionIsCollectionOfKeysSpecified() throws Exception {
         qParser.parse("key1=value1&key1&key1=&key2=value2&&=");
-        assertThat(qParser.getKeys(), hasItems("key1", "key2", ""));
-        assertThat(qParser.getKeys(), hasItem(not("key3")));
-        assertThat(qParser.getKeys().size(), is(3));
+        assertThat(qParser.getKeySet(), hasItems("key1", "key2", ""));
+        assertThat(qParser.getKeySet(), hasItem(not("key3")));
+        assertThat(qParser.getKeySet().size(), is(3));
     }
 
     @Test
@@ -211,7 +214,7 @@ public class QueryParserTest {
             throws Exception {
         qParser.parse("%20key%20=%20value%20");
         assertThat(qParser.containsKey(" key "), is(true));
-        assertThat(qParser.getKeys(), hasItem(" key "));
+        assertThat(qParser.getKeySet(), hasItem(" key "));
         assertThat(qParser.getValues(" key "), is(notNullValue()));
     }
 
@@ -363,7 +366,7 @@ public class QueryParserTest {
             throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
-        assertThat(qParser.getKeys(), hasItem("key key"));
+        assertThat(qParser.getKeySet(), hasItem("key key"));
     }
 
     @Test
@@ -372,5 +375,55 @@ public class QueryParserTest {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
         assertThat(qParser.getValues("key key"), hasItem("value value"));
+    }
+
+    @Test
+    public void WhenParsingAnEmptyQueryStringThenEmptyKeyToNullMustBeRemoved() throws Exception {
+        qParser.parse("");
+        assertThat(qParser.getKeySet().isEmpty(), is(true));
+    }
+
+    @Test
+    public void WhenParsingAnFullySpacedQueryStringThenKeyShouldNotBeRemoved() throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .parse(" ");
+        assertThat(qParser.getValues(" "), hasItem(nullValue()));
+    }
+
+    @Test
+    public void WhenParsingAnEmptyQueryStringThenEmptyKeyToEmptyValueShouldNotBeRemoved() throws Exception {
+        qParser.parse("=");
+        assertThat(qParser.getValues(""), hasItem(""));
+    }
+
+    @Test
+    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingAnFullySpacedQueryStringThenKeyShouldBeRemoved()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE, QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .parse(" ");
+        assertThat(qParser.getKeySet().isEmpty(), is(true));
+    }
+
+    @Test
+    public void splitStringTest() throws Exception {
+        List<String> list = QueryParser.stringSplit("a=b=c", '=');
+        List<String> exp = Arrays.asList("a", "b", "c");
+        assertThat(list, is(equalTo(exp)));
+
+        list = QueryParser.stringSplit("", '=');
+        exp = Collections.singletonList("");
+        assertThat(list, is(equalTo(exp)));
+
+        list = QueryParser.stringSplit("=", '=');
+        exp = Arrays.asList("", "");
+        assertThat(list, is(equalTo(exp)));
+
+        list = QueryParser.stringSplit("a==", '=');
+        exp = Arrays.asList("a", "", "");
+        assertThat(list, is(equalTo(exp)));
+
+        list = QueryParser.stringSplit(" =a=", '=');
+        exp = Arrays.asList(" ", "a", "");
+        assertThat(list, is(equalTo(exp)));
     }
 }

@@ -1,17 +1,107 @@
 import java.net.URI;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class QueryParser {
     private EnumSet<Flag> flags;
+    private HashMap<String, ArrayList<String>> map;
 
     /**
      * Instantiates QueryParser without any flags.
      */
     public QueryParser() {
         flags = EnumSet.noneOf(Flag.class);
+        map = new HashMap<>();
+    }
+
+    /**
+     * has some differences with {@link String#split(String)}
+     *
+     * @param str string which we want to split
+     * @param c   splitter
+     * @return list of  parts
+     */
+    static List<String> stringSplit(String str, char c) {
+        ArrayList<String> output = new ArrayList<>();
+        String splitter = new String(new char[]{c});
+
+        stringSplit0(str, splitter, output);
+
+        return output;
+    }
+
+    /**
+     * @param str      string which we want to split
+     * @param splitter splitter string including only one character
+     * @param array    list of parts
+     */
+    private static void stringSplit0(String str, String splitter, ArrayList<String> array) {
+        if (!str.contains(splitter)) {
+            array.add(str);
+            return;
+        }
+
+        int index = str.indexOf(splitter);
+        String first = (index == 0) ? "" : str.substring(0, index);
+        String second = (index == str.length() - 1) ? "" : str.substring(index + 1);
+
+        array.add(first);
+        stringSplit0(second, splitter, array);
+    }
+
+    /**
+     * Checks encoded characters for bad structure
+     *
+     * @throws IllegalArgumentException if encoded characters have bad structure
+     */
+    private static void checkEncodedCharacters() {
+        // code ...
+    }
+
+    /**
+     * Checks query string structure.
+     * Key and value can be empty.
+     * And each key can contain multiple values.
+     * But your string can not have key=value1=value2,
+     * instead use key=value1&key=value2
+     *
+     * @param query query string which is being checked
+     * @throws IllegalArgumentException when query has invalid structure
+     */
+    private static void checkStructure(String query) {
+        List<String> array = stringSplit(query, '&');
+        for (String str : array)
+            if (str.contains("="))
+                if (str.indexOf('=') != str.lastIndexOf('='))
+                    throw new IllegalArgumentException("query string has bad structure");
+    }
+
+    /**
+     * Ignores white space for a list of strings.
+     * Returns null for null.
+     *
+     * @param values list of strings
+     * @return ignored list
+     */
+    private static ArrayList<String> ignoreWhiteSpace(List<String> values) {
+        ArrayList<String> newValues = new ArrayList<>(values.size());
+        for (String str : values)
+            if (str == null)
+                newValues.add(null);
+            else
+                newValues.add(ignoreWhiteSpace(str));
+        return newValues;
+    }
+
+    /**
+     * Ignores white space for a string.
+     *
+     * @param str input string should not be {@code null}
+     * @return ignored string
+     */
+    private static String ignoreWhiteSpace(String str) {
+        while (str.contains("  "))
+            str = str.replace("  ", " ");
+        return str.trim();
     }
 
     /**
@@ -53,7 +143,8 @@ public class QueryParser {
             if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
                 if (!containsFlag(Flag.IGNORE_WHITE_SPACE))
                     if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                        throw new IllegalStateException("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
+                        throw new IllegalStateException
+                                ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
 
         this.flags.addAll(Arrays.asList(flags));
 
@@ -120,29 +211,6 @@ public class QueryParser {
     }
 
     /**
-     * Checks encoded characters for bad structure
-     *
-     * @throws IllegalArgumentException if encoded characters have bad structure
-     */
-    private void checkEncodedCharacters() {
-        // code ...
-    }
-
-    /**
-     * Checks query string structure.
-     * Key and value can be empty.
-     * And each key can contain multiple values.
-     * But your string can not have key=value1=value2,
-     * instead use key=value1&key=value2
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has invalid structure
-     */
-    private void checkStructure(String query) {
-        // code ...
-    }
-
-    /**
      * Parses query strings.
      * You can get query String from URI by {@link URI#getQuery()}.
      * Also note that your string should not include "?"
@@ -160,7 +228,7 @@ public class QueryParser {
         checkEncodedCharacters();
         checkStructure(query);
 
-        // Parsing ...
+        parseChecked(query);
 
         if (containsFlag(Flag.IGNORE_WHITE_SPACE))
             ignoreWhiteSpace();
@@ -177,20 +245,58 @@ public class QueryParser {
             convertToNull();
 
         removeEmptyKeyToNullMaps();
+        removeEmptyKeySets();
 
         return this;
     }
 
     /**
-     * Cleans QueryParse
+     * Removes keys which have empty value list
+     */
+    private void removeEmptyKeySets() {
+        for (String key : getKeySet())
+            if (getValues(key).isEmpty())
+                map.remove(key);
+    }
+
+    /**
+     * Parses query string after checking all aspects
+     *
+     * @param query query string
+     */
+    private void parseChecked(String query) {
+        List<String> array = stringSplit(query, '&');
+        for (String str : array) {
+            if (str.contains("=")) {
+                List<String> keyValue = stringSplit(str, '=');
+                if (!containsKey(keyValue.get(0))) {
+                    map.put(keyValue.get(0), new ArrayList<>());
+                }
+                getValues(keyValue.get(0)).add(keyValue.get(1));
+            } else {
+                if (!containsKey(str)) {
+                    map.put(str, new ArrayList<>());
+                }
+                getValues(str).add(null);
+            }
+        }
+    }
+
+    /**
+     * Cleans QueryParser
      */
     public QueryParser clear() {
-        // code ...
+        map.clear();
         return this;
     }
 
+    /**
+     * Checks if QueryParser is empty
+     *
+     * @return true if query parser is empty
+     */
     public boolean isEmpty() {
-        return true;
+        return map.isEmpty();
     }
 
     /**
@@ -210,16 +316,14 @@ public class QueryParser {
     public boolean containsKey(String key) {
         if (key == null)
             throw new NullPointerException("key can not be null");
-        // Code ...
-        return false;
+        return map.containsKey(key);
     }
 
     /**
      * @return set of keys
      */
-    public Set<String> getKeys() {
-        // Code ...
-        return null;
+    public Set<String> getKeySet() {
+        return map.keySet();
     }
 
     /**
@@ -230,8 +334,7 @@ public class QueryParser {
     public List<String> getValues(String key) {
         if (key == null)
             throw new NullPointerException("key can not be null");
-        // Code ...
-        return null;
+        return map.get(key);
     }
 
     /**
@@ -242,13 +345,17 @@ public class QueryParser {
      * This Also makes Set of white Spaces between words to a single space.
      */
     private void ignoreWhiteSpace() {
-        // code ...
-    }
+        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
 
-    private String ignoreWhiteSpace(String str) {
-        while (str.contains("  "))
-            str = str.replace("  ", " ");
-        return str.trim();
+        for (String key : getKeySet()) {
+            String newKey = ignoreWhiteSpace(key);
+            if (!newMap.containsKey(newKey))
+                newMap.put(newKey, new ArrayList<>());
+            ArrayList<String> newValues = ignoreWhiteSpace(getValues(key));
+            newMap.get(newKey).addAll(newValues);
+        }
+
+        map = newMap;
     }
 
     /**
@@ -272,7 +379,13 @@ public class QueryParser {
      * (for example in parse("") we have one)
      */
     private void removeEmptyKeyToNullMaps() {
-        //code ...
+        for (String key : getKeySet())
+            if (key.isEmpty()) {
+                List<String> values = getValues(key);
+                while (values.contains(null))
+                    values.remove(null);
+                break;
+            }
     }
 
     /**
