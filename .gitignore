@@ -10,5 +10,7 @@ gradle.properties
 # Build files
 build/
 
-# Code coverage output
+# Code coverage and test result reports
 cov/
+report/
+

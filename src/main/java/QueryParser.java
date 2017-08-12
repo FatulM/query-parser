@@ -3,7 +3,11 @@ import java.util.*;
 
 
 /**
- * Tartib of the key is not guarantied.
+ * QueryParser is a Java API which can be used to parse query strings.
+ * Query string can be obtained from URI by {@link URI#getQuery()}.
+ * <br />
+ * Order of the keys are not guarantied if you include some of the flags
+ * and even some times which query string includes encoded characters.
  */
 public class QueryParser {
     private EnumSet<Flag> flags;
@@ -58,7 +62,7 @@ public class QueryParser {
      * @throws IllegalArgumentException if encoded characters have bad structure
      */
     private static void checkEncodedCharacters() {
-        // code ...
+        // TODO: not complete + not tested
     }
 
     /**
@@ -108,6 +112,13 @@ public class QueryParser {
         return str.trim();
     }
 
+
+    /**
+     * Merges equal values for a list of value strings
+     *
+     * @param values input value list
+     * @return output value list
+     */
     private static ArrayList<String> mergeValues(ArrayList<String> values) {
         ArrayList<String> newValues = new ArrayList<>();
 
@@ -118,6 +129,13 @@ public class QueryParser {
         return newValues;
     }
 
+
+    /**
+     * Converts empty values to null for a value list
+     *
+     * @param values input value list
+     * @return output value list
+     */
     private static ArrayList<String> convertToNull(ArrayList<String> values) {
         ArrayList<String> newValues = new ArrayList<>(values.size());
 
@@ -128,6 +146,41 @@ public class QueryParser {
                 newValues.add(null);
             } else {
                 newValues.add(value);
+            }
+
+        return newValues;
+    }
+
+    /**
+     * Converts encoded characters to unencoded characters.
+     * Input can not be {@code null}.
+     *
+     * @param str input string
+     * @return output string
+     */
+    private static String convertEncodedCharacters(String str) {
+        while (str.contains("%20"))
+            str = str.replace("%20", " ");
+        return str;
+
+        // TODO: not complete + not tested completely
+    }
+
+    /**
+     * Converts encoded characters to unencoded characters for a
+     * list of value strings.
+     *
+     * @param values input values list
+     * @return output values list
+     */
+    private static ArrayList<String> convertEncodedCharacters(ArrayList<String> values) {
+        ArrayList<String> newValues = new ArrayList<>(values.size());
+
+        for (String value : values)
+            if (value == null) {
+                newValues.add(null);
+            } else {
+                newValues.add(convertEncodedCharacters(value));
             }
 
         return newValues;
@@ -233,10 +286,22 @@ public class QueryParser {
      * @throws IllegalArgumentException when query has invalid characters
      */
     private void checkCharacters(String query) {
-        // code ...
+        for (char c : query.toCharArray())
+            if (!(
+                    ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
+                            ('0' <= c && c <= '9') || c == '%' ||
+                            c == '/' || c == '?' || c == ':' || c == '@' || c == '-' ||
+                            c == '.' || c == '_' || c == '~' || c == '!' || c == '$' ||
+                            c == '&' || c == '\'' || c == '(' || c == ')' || c == '*' ||
+                            c == '+' || c == ',' || c == ';' || c == '=' || c == ' '
+            ))
+                throw new IllegalArgumentException("query string has invalid characters");
+
         if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
             if (query.contains(" "))
                 throw new IllegalArgumentException("query string contains unencoded white space");
+
+        // TODO: not complete + not tested completely
     }
 
     /**
@@ -334,7 +399,17 @@ public class QueryParser {
      * Converts encoded characters with % to unencoded characters
      */
     private void convertEncodedCharacters() {
+        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
 
+        for (String key : getKeySet()) {
+            String newKey = convertEncodedCharacters(key);
+            if (!newMap.containsKey(newKey))
+                newMap.put(newKey, new ArrayList<>());
+            ArrayList<String> newValues = convertEncodedCharacters((ArrayList<String>) getValues(key));
+            newMap.get(newKey).addAll(newValues);
+        }
+
+        map = newMap;
     }
 
     /**
@@ -351,6 +426,8 @@ public class QueryParser {
     }
 
     /**
+     * Returns set of keys
+     *
      * @return set of keys
      */
     public Set<String> getKeySet() {
@@ -358,6 +435,8 @@ public class QueryParser {
     }
 
     /**
+     * Returns list of values for a specified key
+     *
      * @param key the key that we want to get values for that key
      * @return list of values for a specified key
      * @throws NullPointerException if key is null
@@ -429,10 +508,21 @@ public class QueryParser {
     }
 
     /**
+     * Converts key value map to a query string
+     *
+     * @return minified query string
+     */
+    @Override
+    public String toString() {
+        return map.toString();
+        // TODO: not complete + not tested
+    }
+
+    /**
      * This enum includes flags which can be used in QueryParser.
      * <tt>IGNORE_WHITE_SPACE</tt> ignores all white spaces and converts fully
      * white space or empty strings to empty string (not null string).
-     * This option does NOT guaranty tartib of the values
+     * This option does NOT guaranty order of the values.
      * <tt>MERGE_VALUES</tt> merges equal values
      * <tt>CONVERT_TO_NULL</tt> converts empty strings to null.
      * <tt>WHITE_SPACE_IS_VALID</tt> indicates that query string can have unencoded white space.

@@ -22,12 +22,9 @@ import static org.junit.Assert.assertThat;
 @RunWith(Theories.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueryParserTest {
-    @DataPoints("QueryStringsWithIllegalCharacters")
+    @DataPoints("Query Strings With Illegal Characters")
     public static String[] QUERY_STRING_WITH_ILLEGAL_CHARACTERS = new String[]
-            {"?key=value", "\\", "key=value#", "key=value\n"};
-    @DataPoints("IllegalKeyStrings")
-    public static String[] ILLEGAL_KEY_STRINGS = new String[]
-            {"?key", "key&key", "key\n", "key\\"};
+            {"key=[value]", "\\", "key=value#", "key=value\n", "{key}", "key=value\""};
     @Rule
     public Timeout globalTimeout = new Timeout(1, TimeUnit.MINUTES);
     @Rule
@@ -99,7 +96,7 @@ public class QueryParserTest {
 
     @Theory
     public void WhenParsingQueryStringWithInvalidCharactersThenThrowsIllegalArgumentException
-            (@FromDataPoints("QueryStringsWithIllegalCharacters") String str) throws Exception {
+            (@FromDataPoints("Query Strings With Illegal Characters") String str) throws Exception {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("query string has invalid characters");
         qParser.parse(str);
@@ -285,22 +282,6 @@ public class QueryParserTest {
         thrown.expectMessage("query parser is not empty");
         qParser.parse("key=value")
                 .parse("key=value");
-    }
-
-    @Theory
-    public void WhenCheckingIllegalKeyStringsThenItThrowsIllegalArgumentException
-            (@FromDataPoints("IllegalKeyStrings") String key) throws Exception {
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("key string is illegal");
-        qParser.containsKey(key);
-    }
-
-    @Theory
-    public void WhenGettingValuesForIllegalKeyStringsThenItThrowsIllegalArgumentException
-            (@FromDataPoints("Illegal Key Strings") String key) throws Exception {
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("key string is illegal");
-        qParser.getValues(key);
     }
 
     @Test
