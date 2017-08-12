@@ -254,9 +254,11 @@ public class QueryParser {
      * Removes keys which have empty value list
      */
     private void removeEmptyKeySets() {
+        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
         for (String key : getKeySet())
-            if (getValues(key).isEmpty())
-                map.remove(key);
+            if (!getValues(key).isEmpty())
+                newMap.put(key, (ArrayList<String>) getValues(key));
+        map = newMap;
     }
 
     /**

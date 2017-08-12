@@ -119,16 +119,22 @@ public class QueryParserTest {
 
     @Test
     public void WhenParsingAComplicatedQueryStringThenItContainsAllKeysSpecified() throws Exception {
-        qParser.parse("key1=value1&key1&key1=&key2=value2");
+        qParser.parse("key1=value1&key1&key1=&key2=value2&=");
         assertThat(qParser.containsKey("key1"), is(true));
         assertThat(qParser.containsKey("key2"), is(true));
-        assertThat(qParser.containsKey(""), is(false));
-        assertThat(qParser.containsKey(null), is(false));
+        assertThat(qParser.containsKey(""), is(true));
     }
 
     @Test
-    public void WhenParsingAQueryWithEmptyKeyValuePairThenItContainsEmptyKey() throws Exception {
+    public void WhenParsingAQueryWithEmptyKeyValuePairWithoutEqualSignThenItDoesNotContainsEmptyKey()
+            throws Exception {
         qParser.parse("key=value&");
+        assertThat(qParser.containsKey(""), is(false));
+    }
+
+    @Test
+    public void WhenParsingAQueryWithEmptyKeyValuePairWithEqualSignThenItContainsEmptyKey() throws Exception {
+        qParser.parse("key=value&=");
         assertThat(qParser.containsKey(""), is(true));
     }
 
@@ -136,13 +142,6 @@ public class QueryParserTest {
     public void WhenParsingAQueryWithAnSpecifiedKeyThenValueListForOtherKeyIsNull() throws Exception {
         qParser.parse("key1=value1");
         assertThat(qParser.getValues("key2"), is(nullValue()));
-    }
-
-    @Test
-    public void WhenParsingAQueryWithEmptyKeyValuePairThenItContainsNullValueForEmptyKey() throws Exception {
-        qParser.parse("key=value&");
-        assertThat(qParser.getValues(""), hasItem(nullValue()));
-        assertThat(qParser.getValues("").size(), is(1));
     }
 
     @Test
@@ -425,5 +424,10 @@ public class QueryParserTest {
         list = QueryParser.stringSplit(" =a=", '=');
         exp = Arrays.asList(" ", "a", "");
         assertThat(list, is(equalTo(exp)));
+    }
+
+    @Test
+    public void WhenQueryParserIsClearedThenItIsEmpty() {
+        assertThat(qParser.parse("key=value").clear().isEmpty(), is(true));
     }
 }
