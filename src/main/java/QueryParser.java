@@ -1,6 +1,10 @@
 import java.net.URI;
 import java.util.*;
 
+
+/**
+ * Tartib of the key is not guarantied.
+ */
 public class QueryParser {
     private EnumSet<Flag> flags;
     private HashMap<String, ArrayList<String>> map;
@@ -102,6 +106,31 @@ public class QueryParser {
         while (str.contains("  "))
             str = str.replace("  ", " ");
         return str.trim();
+    }
+
+    private static ArrayList<String> mergeValues(ArrayList<String> values) {
+        ArrayList<String> newValues = new ArrayList<>();
+
+        for (String value : values)
+            if (!newValues.contains(value))
+                newValues.add(value);
+
+        return newValues;
+    }
+
+    private static ArrayList<String> convertToNull(ArrayList<String> values) {
+        ArrayList<String> newValues = new ArrayList<>(values.size());
+
+        for (String value : values)
+            if (value == null) {
+                newValues.add(null);
+            } else if (value.isEmpty()) {
+                newValues.add(null);
+            } else {
+                newValues.add(value);
+            }
+
+        return newValues;
     }
 
     /**
@@ -238,11 +267,11 @@ public class QueryParser {
         if (containsFlag(Flag.HARD_IGNORE_WHITE_SPACE))
             ignoreWhiteSpace();
 
-        if (containsFlag(Flag.MERGE_VALUES))
-            mergeValues();
-
         if (containsFlag(Flag.CONVERT_TO_NULL))
             convertToNull();
+
+        if (containsFlag(Flag.MERGE_VALUES))
+            mergeValues();
 
         removeEmptyKeyToNullMaps();
         removeEmptyKeySets();
@@ -365,7 +394,10 @@ public class QueryParser {
      * Also note that: (null is equal to null) but ("" is not equal to null)
      */
     private void mergeValues() {
-        // code ...
+        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        for (String key : getKeySet())
+            newMap.put(key, mergeValues((ArrayList<String>) getValues(key)));
+        map = newMap;
     }
 
     /**
@@ -373,7 +405,13 @@ public class QueryParser {
      * But does not manipulate keys.
      */
     private void convertToNull() {
-        // code ...
+        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        for (String key : getKeySet()) {
+            ArrayList<String> values = (ArrayList<String>) getValues(key);
+            ArrayList<String> newValues = convertToNull(values);
+            newMap.put(key, newValues);
+        }
+        map = newMap;
     }
 
     /**
@@ -393,7 +431,8 @@ public class QueryParser {
     /**
      * This enum includes flags which can be used in QueryParser.
      * <tt>IGNORE_WHITE_SPACE</tt> ignores all white spaces and converts fully
-     * white space or empty strings to empty string (not null string)
+     * white space or empty strings to empty string (not null string).
+     * This option does NOT guaranty tartib of the values
      * <tt>MERGE_VALUES</tt> merges equal values
      * <tt>CONVERT_TO_NULL</tt> converts empty strings to null.
      * <tt>WHITE_SPACE_IS_VALID</tt> indicates that query string can have unencoded white space.

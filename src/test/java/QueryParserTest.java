@@ -427,7 +427,71 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenQueryParserIsClearedThenItIsEmpty() {
+    public void WhenQueryParserIsClearedThenItIsEmpty() throws Exception {
         assertThat(qParser.parse("key=value").clear().isEmpty(), is(true));
+    }
+
+    @Test
+    public void WhenParsingAQueryWithMultipleValuesForAKeyThenItIsHandledWell() throws Exception {
+        qParser.parse("key=value1&key=value2&key=&key");
+        List<String> list = Arrays.asList("value1", "value2", "", null);
+        assertThat(qParser.getValues("key"), is(list));
+    }
+
+    @Test
+    public void GivenAQueryParserWithMergeValuesWhenParsingAQueryWithMultipleValuesForAKeyThenItValuesAreMerged()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.MERGE_VALUES)
+                .parse("key=value1&key=value1&key=&key&key=&key&key=value1&anotherKey=anotherValue");
+        List<String> list = Arrays.asList("value1", "", null);
+        assertThat(qParser.getValues("key"), is(list));
+    }
+
+    @Test
+    public void GivenAQueryParserWithMergeValuesAndConvertToNullWhenParsingThenIgnoreWhiteSpaceIsFirst()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.MERGE_VALUES,
+                QueryParser.Flag.WHITE_SPACE_IS_VALID,
+                QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .parse(" key  =  value   1 &key  = value 2  & key=value 1 & key = value    3");
+        assertThat(qParser.getValues("key"), hasItems("value 1", "value 2", "value 3"));
+        assertThat(qParser.getValues("key").size(), is(3));
+    }
+
+    @Test
+    public void GivenAQueryParserWithIgnoreAndHardIgnoreWhiteSpaceWhenParsingAQueryThenWhiteSpaceIsHandledWell()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE,
+                QueryParser.Flag.WHITE_SPACE_IS_VALID,
+                QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .parse("%20key%20%20=  value%20   1 &%20key%20  = %20value 2  & key=%20value 1 & %20%20key = value 3");
+        assertThat(qParser.getValues("key"), hasItems("value 1", "value 2", "value 3"));
+        assertThat(qParser.getValues("key").size(), is(4));
+    }
+
+    @Test
+    public void GivenAQueryParserWithConvertToNullWhenParsingAQueryThenEmptyStringIsConvertedToNull()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL)
+                .parse("key=");
+        assertThat(qParser.getValues("key"), hasItem(nullValue()));
+        assertThat(qParser.getValues("key").size(), is(1));
+    }
+
+    @Test
+    public void GivenAQueryParserWithConvertToNullWhenParsingAQueryWithEmptyKeyAndValueThenItIsRemoved()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL)
+                .parse("=");
+        assertThat(qParser.isEmpty(), is(true));
+    }
+
+    @Test
+    public void GivenAQueryParserWithConvertToNullAndMergeValuesWhenParsingAQueryThenConvertShouldBeFirst()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL, QueryParser.Flag.MERGE_VALUES)
+                .parse("key=value&key=&key&key=value&key=&key");
+        List<String> list = Arrays.asList("value", null);
+        assertThat(qParser.getValues("key"), is(list));
     }
 }
