@@ -49,6 +49,12 @@ public class QueryParser {
                     if (!containsFlag(flag))
                         throw new IllegalStateException("query parser is not empty");
 
+        if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
+            if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
+                if (!containsFlag(Flag.IGNORE_WHITE_SPACE))
+                    if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+                        throw new IllegalStateException("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
+
         this.flags.addAll(Arrays.asList(flags));
 
         return this;
@@ -71,7 +77,7 @@ public class QueryParser {
             if (flag == null)
                 throw new NullPointerException("flag should not be null");
 
-        if (isEmpty()) {
+        if (!isEmpty()) {
             if (flags.length == 0) {
                 if (!this.flags.isEmpty())
                     throw new IllegalStateException("query parser is not empty");
@@ -81,6 +87,14 @@ public class QueryParser {
                         throw new IllegalStateException("query parser is not empty");
             }
         }
+
+        if (flags.length != 0)
+            if (Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
+                if (!Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
+                    if (containsFlag(Flag.WHITE_SPACE_IS_VALID))
+                        if (containsFlag(Flag.IGNORE_WHITE_SPACE))
+                            throw new RuntimeException
+                                    ("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
 
         if (flags.length == 0)
             this.flags.clear();
@@ -187,29 +201,15 @@ public class QueryParser {
     }
 
     /**
-     * Checks key for bad structure or illegal characters
-     *
-     * @param key key that we want to check
-     * @throws NullPointerException     if key is null
-     * @throws IllegalArgumentException if key has illegal characters
-     */
-    private void checkKey(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-            if (key.contains(" "))
-                throw new IllegalArgumentException("key can not include unencoded white space");
-        // Code ...
-    }
-
-    /**
      * Checks if QueryParser contains a specified key
      *
      * @param key key that we want to check
      * @return if QueryParser contains the specified key
+     * @throws NullPointerException if key is null
      */
     public boolean containsKey(String key) {
-        checkKey(key);
+        if (key == null)
+            throw new NullPointerException("key can not be null");
         // Code ...
         return false;
     }
@@ -225,9 +225,11 @@ public class QueryParser {
     /**
      * @param key the key that we want to get values for that key
      * @return list of values for a specified key
+     * @throws NullPointerException if key is null
      */
     public List<String> getValues(String key) {
-        checkKey(key);
+        if (key == null)
+            throw new NullPointerException("key can not be null");
         // Code ...
         return null;
     }

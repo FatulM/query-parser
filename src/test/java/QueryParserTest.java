@@ -207,19 +207,19 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenGettingValuesForAKeyWithWhiteSpaceThenThrowsException()
+    public void WhenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForKey()
             throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("key can not include unencoded white space");
-        qParser.getValues("key ");
+        qParser.parse("%20key%20=%20value%20");
+        assertThat(qParser.containsKey(" key "), is(true));
+        assertThat(qParser.getKeys(), hasItem(" key "));
+        assertThat(qParser.getValues(" key "), is(notNullValue()));
     }
 
     @Test
-    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenCheckingIfAKeyWithWhiteSpaceExistsThenThrowsException()
+    public void WhenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForValue()
             throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("key can not include unencoded white space");
-        qParser.containsKey("key ");
+        qParser.parse("%20key%20=%20value%20");
+        assertThat(qParser.getValues(" key "), hasItem(" value "));
     }
 
     @Test
@@ -299,5 +299,78 @@ public class QueryParserTest {
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("key string is illegal");
         qParser.getValues(key);
+    }
+
+    @Test
+    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForKeys()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .parse("  key   key  =  value   value    ");
+        assertThat(qParser.containsKey("key key"), is(true));
+    }
+
+    @Test
+    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForValues()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .parse("  key   key  =  value   value    ");
+        assertThat(qParser.getValues("key key"), hasItem("value value"));
+    }
+
+    @Test
+    public void GivenAEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
+            throws Exception {
+        try {
+            qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+        } catch (Exception ignored) {
+        }
+
+        assertThat(qParser.isEmpty(), is(true));
+    }
+
+    @Test
+    public void GivenAQueryParserParsedAQueryWhenAddingNotProperFlagsThenQueryParserShouldNotChange()
+            throws Exception {
+        qParser.parse("key=value");
+        try {
+            qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+        } catch (Exception ignored) {
+        }
+        assertThat(qParser.getValues("key"), hasItem("value"));
+    }
+
+    @Test
+    public void GivenANotEmptyQueryParserWhenAddingBadFlagsThenItShouldThrowExceptionForBadStateNotBadFlags()
+            throws Exception {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("query parser is not empty");
+        qParser.parse("key=value");
+        qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL);
+    }
+
+    @Test
+    public void GivenANotEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
+            throws Exception {
+        try {
+            qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL);
+        } catch (Exception ignored) {
+        }
+        assertThat(qParser.isEmpty(), is(true));
+    }
+
+    @Test
+    public void GivenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForKeys()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
+        assertThat(qParser.getKeys(), hasItem("key key"));
+    }
+
+    @Test
+    public void GivenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForValues()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
+        assertThat(qParser.getValues("key key"), hasItem("value value"));
     }
 }
