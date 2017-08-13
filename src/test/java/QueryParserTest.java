@@ -486,4 +486,46 @@ public class QueryParserTest {
                 .parse(" key\n\n\t key \t \n=value\tvalue\n\n\t ");
         assertThat(qParser.getValues("key key"), hasItem("value value"));
     }
+
+    @Test
+    public void GivenEmptyFlagsWhenRemoveWhiteSpaceIsValidWithOutIgnoreWhiteSpaceThenNoExceptionIsThrown()
+            throws Exception {
+        qParser.removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
+    }
+
+    @Test
+    public void WhenParsingALegalStringThenNoExceptionShouldBeThrown() throws Exception {
+        qParser.parse("abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "0123456789" + "/?:@-._~!$&'()*+,;=");
+    }
+
+    @Test
+    public void GivenWhiteSpaceIsValidWhenHavingEncodedAndUnEncodedSpacesThenKeysCanBeMerged() throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .parse("key =value 1&key%20=value%202");
+        assertThat(qParser.getValues("key "), hasItems("value 1", "value 2"));
+    }
+
+    @Test
+    public void GivenNotEmptyQueryParserWhenAddingFlagsWithEmptyArgumentThenNothingHappens() throws Exception {
+        qParser.parse("key=value")
+                .addFlags();
+    }
+
+    @Test
+    public void WhenAddingOnlyIgnoreWhiteSpaceFlagWithoutEffectThenNothingShouldBeThrown() throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+    }
+
+    @Test
+    public void QueryParserFlagEnumValueOfCheck() {
+        assertThat(QueryParser.Flag.valueOf(QueryParser.Flag.IGNORE_WHITE_SPACE.name()),
+                is(QueryParser.Flag.IGNORE_WHITE_SPACE));
+        // only for suppressing code coverage tool
+    }
 }

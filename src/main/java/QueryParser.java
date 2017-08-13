@@ -229,10 +229,9 @@ public class QueryParser {
 
         if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
             if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
-                if (!containsFlag(Flag.IGNORE_WHITE_SPACE))
-                    if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                        throw new IllegalStateException
-                                ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
+                if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+                    throw new IllegalStateException
+                            ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
 
         this.flags.addAll(Arrays.asList(flags));
 
@@ -512,17 +511,6 @@ public class QueryParser {
                     values.remove(null);
                 break;
             }
-    }
-
-    /**
-     * Converts key value map to a query string
-     *
-     * @return minified query string
-     */
-    @Override
-    public String toString() {
-        return map.toString();
-        // TODO: not complete + not tested
     }
 
     /**
