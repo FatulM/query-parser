@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
 @RunWith(Theories.class)
@@ -156,7 +157,7 @@ public class QueryParserTest {
     public void WhenParsingAQueryWithEmptyValueForASpecifiedKeyThenItContainsEmptyValueForThatKey() throws Exception {
         qParser.parse("key=");
         assertThat(qParser.getValues("key"), hasItem(""));
-        assertThat(qParser.getValues("key").size(), is(1));
+        assertThat(qParser.getValues("key"), hasSize(1));
     }
 
     @Test
@@ -183,7 +184,7 @@ public class QueryParserTest {
         qParser.parse("key1=value1&key1&key1=&key2=value2&&=");
         assertThat(qParser.getKeySet(), hasItems("key1", "key2", ""));
         assertThat(qParser.getKeySet(), hasItem(not("key3")));
-        assertThat(qParser.getKeySet().size(), is(3));
+        assertThat(qParser.getKeySet(), hasSize(3));
     }
 
     @Test
@@ -439,7 +440,7 @@ public class QueryParserTest {
                 QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .parse(" key  =  value   1 &key  = value 2  & key=value 1 & key = value    3");
         assertThat(qParser.getValues("key"), hasItems("value 1", "value 2", "value 3"));
-        assertThat(qParser.getValues("key").size(), is(3));
+        assertThat(qParser.getValues("key"), hasSize(3));
     }
 
     @Test
@@ -450,7 +451,7 @@ public class QueryParserTest {
                 QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .parse("%20key%20%20=  value%20   1 &%20key%20  = %20value 2  & key=%20value 1 & %20%20key = value 3");
         assertThat(qParser.getValues("key"), hasItems("value 1", "value 2", "value 3"));
-        assertThat(qParser.getValues("key").size(), is(4));
+        assertThat(qParser.getValues("key"), hasSize(4));
     }
 
     @Test
@@ -459,7 +460,7 @@ public class QueryParserTest {
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL)
                 .parse("key=");
         assertThat(qParser.getValues("key"), hasItem(nullValue()));
-        assertThat(qParser.getValues("key").size(), is(1));
+        assertThat(qParser.getValues("key"), hasSize(1));
     }
 
     @Test
@@ -517,8 +518,6 @@ public class QueryParserTest {
     @Test
     public void WhenAddingOnlyIgnoreWhiteSpaceFlagWithoutEffectThenNothingShouldBeThrown() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
-                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
-        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
     }
 
