@@ -196,10 +196,10 @@ public class QueryParserTest {
 
     @Test
     public void GivenQueryParserWithProperFlagsWhenRemovingOnlyWhiteSpaceValidThenThrows() throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE);
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
-        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
-                .removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
+        qParser.removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
     }
 
     @Test
@@ -226,28 +226,28 @@ public class QueryParserTest {
 
     @Test
     public void GivenNotEmptyQueryParserWhenWantToAddAFlagThenThrowsIllegalStateException() throws Exception {
+        qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
-        qParser.parse("key=value")
-                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
     }
 
     @Test
     public void GivenNotEmptyQueryParserWhenWantToRemoveAFlagThenThrowsIllegalStateException() throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
-        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
-                .parse("key=value")
-                .removeFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
+        qParser.removeFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
     }
 
     @Test
     public void GivenNotEmptyQueryParserWhenWantToRemoveAllFlagsThenThrowsIllegalStateException() throws Exception {
+        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
-        qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
-                .parse("key=value")
-                .removeFlags();
+        qParser.removeFlags();
     }
 
     @Test
@@ -281,10 +281,10 @@ public class QueryParserTest {
 
     @Test
     public void GivenNotEmptyQueryParserWhenParsingAnotherQueryThenItThrowsIllegalStateException() throws Exception {
+        qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
-        qParser.parse("key=value")
-                .parse("key=value");
+        qParser.parse("key=value");
     }
 
     @Test
@@ -328,10 +328,10 @@ public class QueryParserTest {
     @Test
     public void GivenANotEmptyQueryParserWhenAddingBadFlagsThenItShouldThrowExceptionForBadStateNotBadFlags()
             throws Exception {
+        qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
-        qParser.parse("key=value");
-        qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL);
+        qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
     }
 
     @Test
