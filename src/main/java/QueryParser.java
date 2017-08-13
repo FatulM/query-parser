@@ -107,6 +107,12 @@ public class QueryParser {
      * @return ignored string
      */
     private static String ignoreWhiteSpace(String str) {
+        while (str.contains("\t"))
+            str = str.replace('\t', ' ');
+
+        while (str.contains("\n"))
+            str = str.replace('\n', ' ');
+
         while (str.contains("  "))
             str = str.replace("  ", " ");
         return str.trim();
@@ -293,12 +299,13 @@ public class QueryParser {
                             c == '/' || c == '?' || c == ':' || c == '@' || c == '-' ||
                             c == '.' || c == '_' || c == '~' || c == '!' || c == '$' ||
                             c == '&' || c == '\'' || c == '(' || c == ')' || c == '*' ||
-                            c == '+' || c == ',' || c == ';' || c == '=' || c == ' '
+                            c == '+' || c == ',' || c == ';' || c == '=' ||
+                            c == ' ' || c == '\n' || c == '\t'
             ))
                 throw new IllegalArgumentException("query string has invalid characters");
 
         if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-            if (query.contains(" "))
+            if (query.contains(" ") || query.contains("\n") || query.contains("\t"))
                 throw new IllegalArgumentException("query string contains unencoded white space");
 
         // TODO: not complete + not tested completely

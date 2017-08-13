@@ -24,7 +24,10 @@ import static org.junit.Assert.assertThat;
 public class QueryParserTest {
     @DataPoints("Query Strings With Illegal Characters")
     public static String[] QUERY_STRING_WITH_ILLEGAL_CHARACTERS = new String[]
-            {"key=[value]", "\\", "key=value#", "key=value\n", "{key}", "key=value\""};
+            {"key=[value]", "\\", "key=value#", "key=value>", "{key}", "key=value\""};
+    @DataPoints("Query Strings With White Space")
+    public static String[] QUERY_STRING_WITH_WHITESPACE_CHARACTERS = new String[]
+            {"key= value", " ", "\nkey=value", "k\tey=value", "key\n\t", "key\t= value"};
     @Rule
     public Timeout globalTimeout = new Timeout(1, TimeUnit.MINUTES);
     @Rule
@@ -102,6 +105,14 @@ public class QueryParserTest {
         qParser.parse(str);
     }
 
+    @Theory
+    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenParsingQueryWithWhiteSpaceThenThrowsIllegalArgumentException
+            (@FromDataPoints("Query Strings With White Space") String str) throws Exception {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("query string contains unencoded white space");
+        qParser.parse(str);
+    }
+
     @Test
     public void WhenParsingBadStructuredQueryStringThenThrowsIllegalArgumentException() throws Exception {
         thrown.expect(IllegalArgumentException.class);
@@ -173,14 +184,6 @@ public class QueryParserTest {
         assertThat(qParser.getKeySet(), hasItems("key1", "key2", ""));
         assertThat(qParser.getKeySet(), hasItem(not("key3")));
         assertThat(qParser.getKeySet().size(), is(3));
-    }
-
-    @Test
-    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenParsingQueryWithWhiteSpaceThenThrowsIllegalArgumentException
-            () throws Exception {
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("query string contains unencoded white space");
-        qParser.parse(" key=value");
     }
 
     @Test
@@ -474,5 +477,13 @@ public class QueryParserTest {
                 .parse("key=value&key=&key&key=value&key=&key");
         List<String> list = Arrays.asList("value", null);
         assertThat(qParser.getValues("key"), is(list));
+    }
+
+    @Test
+    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingAQueryWithAllTypesOfWhiteSpaceThenItIsHandled()
+            throws Exception {
+        qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .parse(" key\n\n\t key \t \n=value\tvalue\n\n\t ");
+        assertThat(qParser.getValues("key key"), hasItem("value value"));
     }
 }
