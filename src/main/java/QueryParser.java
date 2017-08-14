@@ -5,7 +5,7 @@ import java.util.*;
 /**
  * QueryParser is a Java API which can be used to parse query strings.
  * Query string can be obtained from URI by {@link URI#getQuery()}.
- * <br />
+ * <br>
  * Order of the keys are not guarantied if you include some of the flags
  * and even some times which query string includes encoded characters.
  */
@@ -386,6 +386,7 @@ public class QueryParser {
 
     /**
      * Cleans QueryParser
+     * @return this
      */
     public QueryParser clear() {
         map.clear();
@@ -523,7 +524,7 @@ public class QueryParser {
      * <tt>WHITE_SPACE_IS_VALID</tt> indicates that query string can have unencoded white space.
      * <tt>HARD_IGNORE_WHITE_SPACE</tt> ignores encoded white space too.
      * If you add all of them they will be execute in the order:
-     * IGNORE_WHITE_SPACE -> HARD_IGNORE_WHITE_SPACE -> CONVERT_TO_NULL -> MERGE_VALUES
+     * IGNORE_WHITE_SPACE then HARD_IGNORE_WHITE_SPACE then CONVERT_TO_NULL then MERGE_VALUES
      */
     public enum Flag {
         IGNORE_WHITE_SPACE,
