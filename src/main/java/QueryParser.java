@@ -372,12 +372,12 @@ public class QueryParser {
             if (str.contains("=")) {
                 List<String> keyValue = stringSplit(str, '=');
                 if (!containsKey(keyValue.get(0))) {
-                    map.put(keyValue.get(0), new ArrayList<>());
+                    map.put(keyValue.get(0), new ArrayList<String>());
                 }
                 getValues(keyValue.get(0)).add(keyValue.get(1));
             } else {
                 if (!containsKey(str)) {
-                    map.put(str, new ArrayList<>());
+                    map.put(str, new ArrayList<String>());
                 }
                 getValues(str).add(null);
             }
@@ -411,7 +411,7 @@ public class QueryParser {
         for (String key : getKeySet()) {
             String newKey = convertEncodedCharacters(key);
             if (!newMap.containsKey(newKey))
-                newMap.put(newKey, new ArrayList<>());
+                newMap.put(newKey, new ArrayList<String>());
             ArrayList<String> newValues = convertEncodedCharacters((ArrayList<String>) getValues(key));
             newMap.get(newKey).addAll(newValues);
         }
@@ -467,7 +467,7 @@ public class QueryParser {
         for (String key : getKeySet()) {
             String newKey = ignoreWhiteSpace(key);
             if (!newMap.containsKey(newKey))
-                newMap.put(newKey, new ArrayList<>());
+                newMap.put(newKey, new ArrayList<String>());
             ArrayList<String> newValues = ignoreWhiteSpace(getValues(key));
             newMap.get(newKey).addAll(newValues);
         }
