@@ -1,3 +1,5 @@
+package com.github.fatulm.queryParser;
+
 import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Rule;
