@@ -1,4 +1,4 @@
-package com.github.fatulm.queryParser;
+package com.github.fatulm.query;
 
 import org.junit.Before;
 import org.junit.FixMethodOrder;

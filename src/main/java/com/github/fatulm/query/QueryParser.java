@@ -1,4 +1,4 @@
-package com.github.fatulm.queryParser;
+package com.github.fatulm.query;
 
 import java.net.URI;
 import java.util.*;

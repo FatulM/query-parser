@@ -8,8 +8,8 @@ compileJava {
     options.setBootClasspath("C:/program files/Java/jre7/lib/rt.jar")
 }
 
-group 'com.github.fatulm.query-parser'
-version '1.0'
+group 'com.github.fatulm.query'
+version '1.1.0'
 
 repositories {
     mavenCentral()
