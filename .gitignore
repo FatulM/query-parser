@@ -1,5 +1,6 @@
 # IntelliJ IDEA project files
 .idea/
+*.iml
 
 # Gradle files
 .gradle/
@@ -9,8 +10,4 @@ gradle.properties
 
 # Build files
 build/
-
-# Code coverage and test result reports
-cov/
-report/
-
+out/
