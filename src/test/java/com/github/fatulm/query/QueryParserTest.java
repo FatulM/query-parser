@@ -43,21 +43,21 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenRemoveNullArrayArgumentThenThrowsNullPointerException() throws Exception {
+    public void whenRemoveNullArrayArgumentThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("flag should not be null");
         qParser.removeFlags((QueryParser.Flag[]) null);
     }
 
     @Test
-    public void WhenAddNullArrayArgumentThenThrowsNullPointerException() throws Exception {
+    public void whenAddNullArrayArgumentThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("flag should not be null");
         qParser.addFlags((QueryParser.Flag[]) null);
     }
 
     @Test
-    public void WhenAddNullFlagThenThrowsNullPointerException() throws Exception {
+    public void whenAddNullFlagThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("flag should not be null");
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL, null,
@@ -65,28 +65,28 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenRemoveNullFlagThenThrowsNullPointerException() throws Exception {
+    public void whenRemoveNullFlagThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("flag should not be null");
         qParser.removeFlags(QueryParser.Flag.MERGE_VALUES, QueryParser.Flag.HARD_IGNORE_WHITE_SPACE, null);
     }
 
     @Test
-    public void WhenAddFlagsThenObjectContainsThem() throws Exception {
+    public void whenAddFlagsThenObjectContainsThem() throws Exception {
         assertThat(qParser
                 .addFlags(QueryParser.Flag.MERGE_VALUES, QueryParser.Flag.CONVERT_TO_NULL)
                 .containsFlag(QueryParser.Flag.CONVERT_TO_NULL), is(true));
     }
 
     @Test
-    public void WhenCheckingNullFlagThenThrowsNullPointerException() throws Exception {
+    public void whenCheckingNullFlagThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("flag should not be null");
         qParser.containsFlag(null);
     }
 
     @Test
-    public void GivenQueryParserWithSomeFlagsWhenRemovingSomeFlagsThenObjectDoesNotContainThem() throws Exception {
+    public void givenQueryParserWithSomeFlagsWhenRemovingSomeFlagsThenObjectDoesNotContainThem() throws Exception {
         assertThat(qParser
                 .addFlags(QueryParser.Flag.MERGE_VALUES, QueryParser.Flag.CONVERT_TO_NULL)
                 .removeFlags(QueryParser.Flag.IGNORE_WHITE_SPACE, QueryParser.Flag.CONVERT_TO_NULL)
@@ -94,14 +94,14 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingNullQueryStringsThenThrowsNullPointerException() throws Exception {
+    public void whenParsingNullQueryStringsThenThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("query string should not be null");
         qParser.parse(null);
     }
 
     @Theory
-    public void WhenParsingQueryStringWithInvalidCharactersThenThrowsIllegalArgumentException
+    public void whenParsingQueryStringWithInvalidCharactersThenThrowsIllegalArgumentException
             (@FromDataPoints("Query Strings With Illegal Characters") String str) throws Exception {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("query string has invalid characters");
@@ -109,7 +109,7 @@ public class QueryParserTest {
     }
 
     @Theory
-    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenParsingQueryWithWhiteSpaceThenThrowsIllegalArgumentException
+    public void givenQueryParserWithoutWhiteSpaceIsValidWhenParsingQueryWithWhiteSpaceThenThrowsIllegalArgumentException
             (@FromDataPoints("Query Strings With White Space") String str) throws Exception {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("query string contains unencoded white space");
@@ -117,19 +117,19 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingBadStructuredQueryStringThenThrowsIllegalArgumentException() throws Exception {
+    public void whenParsingBadStructuredQueryStringThenThrowsIllegalArgumentException() throws Exception {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("query string has bad structure");
         qParser.parse("key1=value1&key2=value2=value3&key3=value4");
     }
 
     @Test
-    public void WhenParsingASimpleQueryStringThenItContainsKey() throws Exception {
+    public void whenParsingASimpleQueryStringThenItContainsKey() throws Exception {
         assertThat(qParser.parse("key=value").containsKey("key"), is(true));
     }
 
     @Test
-    public void WhenParsingAComplicatedQueryStringThenItContainsAllKeysSpecified() throws Exception {
+    public void whenParsingAComplicatedQueryStringThenItContainsAllKeysSpecified() throws Exception {
         qParser.parse("key1=value1&key1&key1=&key2=value2&=");
         assertThat(qParser.containsKey("key1"), is(true));
         assertThat(qParser.containsKey("key2"), is(true));
@@ -137,52 +137,52 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingAQueryWithEmptyKeyValuePairWithoutEqualSignThenItDoesNotContainsEmptyKey()
+    public void whenParsingAQueryWithEmptyKeyValuePairWithoutEqualSignThenItDoesNotContainsEmptyKey()
             throws Exception {
         qParser.parse("key=value&");
         assertThat(qParser.containsKey(""), is(false));
     }
 
     @Test
-    public void WhenParsingAQueryWithEmptyKeyValuePairWithEqualSignThenItContainsEmptyKey() throws Exception {
+    public void whenParsingAQueryWithEmptyKeyValuePairWithEqualSignThenItContainsEmptyKey() throws Exception {
         qParser.parse("key=value&=");
         assertThat(qParser.containsKey(""), is(true));
     }
 
     @Test
-    public void WhenParsingAQueryWithAnSpecifiedKeyThenValueListForOtherKeyIsNull() throws Exception {
+    public void whenParsingAQueryWithAnSpecifiedKeyThenValueListForOtherKeyIsNull() throws Exception {
         qParser.parse("key1=value1");
         assertThat(qParser.getValues("key2"), is(nullValue()));
     }
 
     @Test
-    public void WhenParsingAQueryWithEmptyValueForASpecifiedKeyThenItContainsEmptyValueForThatKey() throws Exception {
+    public void whenParsingAQueryWithEmptyValueForASpecifiedKeyThenItContainsEmptyValueForThatKey() throws Exception {
         qParser.parse("key=");
         assertThat(qParser.getValues("key"), hasItem(""));
         assertThat(qParser.getValues("key"), hasSize(1));
     }
 
     @Test
-    public void WhenGettingCheckingIfItContainsNullKeyThenItThrowsNullPointerException() throws Exception {
+    public void whenGettingCheckingIfItContainsNullKeyThenItThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("key can not be null");
         qParser.getValues(null);
     }
 
     @Test
-    public void WhenGettingValuesForANullKeyThenItThrowsNullPointerException() throws Exception {
+    public void whenGettingValuesForANullKeyThenItThrowsNullPointerException() throws Exception {
         thrown.expect(NullPointerException.class);
         thrown.expectMessage("key can not be null");
         qParser.containsKey(null);
     }
 
     @Test
-    public void GivenAnEmptyQueryParserThenKeyCollectionIsEmpty() throws Exception {
+    public void givenAnEmptyQueryParserThenKeyCollectionIsEmpty() throws Exception {
         assertThat(qParser.getKeySet().isEmpty(), is(true));
     }
 
     @Test
-    public void WhenParsingAQueryStringThenKeyCollectionIsCollectionOfKeysSpecified() throws Exception {
+    public void whenParsingAQueryStringThenKeyCollectionIsCollectionOfKeysSpecified() throws Exception {
         qParser.parse("key1=value1&key1&key1=&key2=value2&&=");
         assertThat(qParser.getKeySet(), hasItems("key1", "key2", ""));
         assertThat(qParser.getKeySet(), hasItem(not("key3")));
@@ -190,7 +190,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenQueryParserWithoutWhiteSpaceIsValidWhenAddingIgnoreWhiteSpaceFlagThenThrowsIllegalStateException()
+    public void givenQueryParserWithoutWhiteSpaceIsValidWhenAddingIgnoreWhiteSpaceFlagThenThrowsIllegalStateException()
             throws Exception {
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
@@ -198,7 +198,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenQueryParserWithProperFlagsWhenRemovingOnlyWhiteSpaceValidThenThrows() throws Exception {
+    public void givenQueryParserWithProperFlagsWhenRemovingOnlyWhiteSpaceValidThenThrows() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE);
         thrown.expect(RuntimeException.class);
         thrown.expectMessage("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
@@ -206,13 +206,13 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenQueryParserWithProperFlagsWhenRemovingProperThenNothingIsThrown() throws Exception {
+    public void givenQueryParserWithProperFlagsWhenRemovingProperThenNothingIsThrown() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE);
     }
 
     @Test
-    public void WhenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForKey()
+    public void whenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForKey()
             throws Exception {
         qParser.parse("%20key%20=%20value%20");
         assertThat(qParser.containsKey(" key "), is(true));
@@ -221,14 +221,14 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForValue()
+    public void whenParsingAQueryStringWithEncodedSpaceThenSpaceIsConvertedForValue()
             throws Exception {
         qParser.parse("%20key%20=%20value%20");
         assertThat(qParser.getValues(" key "), hasItem(" value "));
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToAddAFlagThenThrowsIllegalStateException() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToAddAFlagThenThrowsIllegalStateException() throws Exception {
         qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
@@ -236,7 +236,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToRemoveAFlagThenThrowsIllegalStateException() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToRemoveAFlagThenThrowsIllegalStateException() throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("key=value");
         thrown.expect(IllegalStateException.class);
@@ -245,7 +245,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToRemoveAllFlagsThenThrowsIllegalStateException() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToRemoveAllFlagsThenThrowsIllegalStateException() throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("key=value");
         thrown.expect(IllegalStateException.class);
@@ -254,36 +254,36 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToAddAFlagWithoutEffectThenNothingIsThrown() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToAddAFlagWithoutEffectThenNothingIsThrown() throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("key=value")
                 .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToRemoveAFlagWithoutEffectThenNothingIsThrown() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToRemoveAFlagWithoutEffectThenNothingIsThrown() throws Exception {
         qParser.parse("key=value")
                 .removeFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE);
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenWantToRemoveAllFlagsWithoutEffectThenNothingIsThrown() throws Exception {
+    public void givenNotEmptyQueryParserWhenWantToRemoveAllFlagsWithoutEffectThenNothingIsThrown() throws Exception {
         qParser.parse("key=value")
                 .removeFlags();
     }
 
     @Test
-    public void GivenEmptyQueryParserThenItIsEmpty() throws Exception {
+    public void givenEmptyQueryParserThenItIsEmpty() throws Exception {
         assertThat(qParser.isEmpty(), is(true));
     }
 
     @Test
-    public void GivenNotEmptyQueryParserThenItIsNotEmpty() throws Exception {
+    public void givenNotEmptyQueryParserThenItIsNotEmpty() throws Exception {
         assertThat(qParser.parse("key=value").isEmpty(), is(false));
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenParsingAnotherQueryThenItThrowsIllegalStateException() throws Exception {
+    public void givenNotEmptyQueryParserWhenParsingAnotherQueryThenItThrowsIllegalStateException() throws Exception {
         qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("query parser is not empty");
@@ -291,7 +291,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForKeys()
+    public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForKeys()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .parse("  key   key  =  value   value    ");
@@ -299,7 +299,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForValues()
+    public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForValues()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .parse("  key   key  =  value   value    ");
@@ -307,7 +307,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
+    public void givenAEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
             throws Exception {
         try {
             qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
@@ -318,7 +318,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserParsedAQueryWhenAddingNotProperFlagsThenQueryParserShouldNotChange()
+    public void givenAQueryParserParsedAQueryWhenAddingNotProperFlagsThenQueryParserShouldNotChange()
             throws Exception {
         qParser.parse("key=value");
         try {
@@ -329,7 +329,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenANotEmptyQueryParserWhenAddingBadFlagsThenItShouldThrowExceptionForBadStateNotBadFlags()
+    public void givenANotEmptyQueryParserWhenAddingBadFlagsThenItShouldThrowExceptionForBadStateNotBadFlags()
             throws Exception {
         qParser.parse("key=value");
         thrown.expect(IllegalStateException.class);
@@ -338,7 +338,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenANotEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
+    public void givenANotEmptyQueryParserWhenQueryParserThrowsExceptionForFlagsThenItShouldBeEmpty()
             throws Exception {
         try {
             qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL);
@@ -348,7 +348,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForKeys()
+    public void givenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForKeys()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
@@ -356,7 +356,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForValues()
+    public void givenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForValues()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
                 .parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20");
@@ -364,26 +364,26 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingAnEmptyQueryStringThenEmptyKeyToNullMustBeRemoved() throws Exception {
+    public void whenParsingAnEmptyQueryStringThenEmptyKeyToNullMustBeRemoved() throws Exception {
         qParser.parse("");
         assertThat(qParser.getKeySet().isEmpty(), is(true));
     }
 
     @Test
-    public void WhenParsingAnFullySpacedQueryStringThenKeyShouldNotBeRemoved() throws Exception {
+    public void whenParsingAnFullySpacedQueryStringThenKeyShouldNotBeRemoved() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
                 .parse(" ");
         assertThat(qParser.getValues(" "), hasItem(nullValue()));
     }
 
     @Test
-    public void WhenParsingAnEmptyQueryStringThenEmptyKeyToEmptyValueShouldNotBeRemoved() throws Exception {
+    public void whenParsingAnEmptyQueryStringThenEmptyKeyToEmptyValueShouldNotBeRemoved() throws Exception {
         qParser.parse("=");
         assertThat(qParser.getValues(""), hasItem(""));
     }
 
     @Test
-    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingAnFullySpacedQueryStringThenKeyShouldBeRemoved()
+    public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingAnFullySpacedQueryStringThenKeyShouldBeRemoved()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE, QueryParser.Flag.WHITE_SPACE_IS_VALID)
                 .parse(" ");
@@ -414,19 +414,19 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenQueryParserIsClearedThenItIsEmpty() throws Exception {
+    public void whenQueryParserIsClearedThenItIsEmpty() throws Exception {
         assertThat(qParser.parse("key=value").clear().isEmpty(), is(true));
     }
 
     @Test
-    public void WhenParsingAQueryWithMultipleValuesForAKeyThenItIsHandledWell() throws Exception {
+    public void whenParsingAQueryWithMultipleValuesForAKeyThenItIsHandledWell() throws Exception {
         qParser.parse("key=value1&key=value2&key=&key");
         List<String> list = Arrays.asList("value1", "value2", "", null);
         assertThat(qParser.getValues("key"), is(list));
     }
 
     @Test
-    public void GivenAQueryParserWithMergeValuesWhenParsingAQueryWithMultipleValuesForAKeyThenItValuesAreMerged()
+    public void givenAQueryParserWithMergeValuesWhenParsingAQueryWithMultipleValuesForAKeyThenItValuesAreMerged()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.MERGE_VALUES)
                 .parse("key=value1&key=value1&key=&key&key=&key&key=value1&anotherKey=anotherValue");
@@ -435,7 +435,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithMergeValuesAndConvertToNullWhenParsingThenIgnoreWhiteSpaceIsFirst()
+    public void givenAQueryParserWithMergeValuesAndConvertToNullWhenParsingThenIgnoreWhiteSpaceIsFirst()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.MERGE_VALUES,
                 QueryParser.Flag.WHITE_SPACE_IS_VALID,
@@ -446,7 +446,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithIgnoreAndHardIgnoreWhiteSpaceWhenParsingAQueryThenWhiteSpaceIsHandledWell()
+    public void givenAQueryParserWithIgnoreAndHardIgnoreWhiteSpaceWhenParsingAQueryThenWhiteSpaceIsHandledWell()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE,
                 QueryParser.Flag.WHITE_SPACE_IS_VALID,
@@ -457,7 +457,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithConvertToNullWhenParsingAQueryThenEmptyStringIsConvertedToNull()
+    public void givenAQueryParserWithConvertToNullWhenParsingAQueryThenEmptyStringIsConvertedToNull()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL)
                 .parse("key=");
@@ -466,7 +466,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithConvertToNullWhenParsingAQueryWithEmptyKeyAndValueThenItIsRemoved()
+    public void givenAQueryParserWithConvertToNullWhenParsingAQueryWithEmptyKeyAndValueThenItIsRemoved()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL)
                 .parse("=");
@@ -474,7 +474,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithConvertToNullAndMergeValuesWhenParsingAQueryThenConvertShouldBeFirst()
+    public void givenAQueryParserWithConvertToNullAndMergeValuesWhenParsingAQueryThenConvertShouldBeFirst()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL, QueryParser.Flag.MERGE_VALUES)
                 .parse("key=value&key=&key&key=value&key=&key");
@@ -483,7 +483,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenAQueryParserWithIgnoreWhiteSpaceWhenParsingAQueryWithAllTypesOfWhiteSpaceThenItIsHandled()
+    public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingAQueryWithAllTypesOfWhiteSpaceThenItIsHandled()
             throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID, QueryParser.Flag.IGNORE_WHITE_SPACE)
                 .parse(" key\n\n\t key \t \n=value\tvalue\n\n\t ");
@@ -491,7 +491,7 @@ public class QueryParserTest {
     }
 
     @Test
-    public void GivenEmptyFlagsWhenRemoveWhiteSpaceIsValidWithOutIgnoreWhiteSpaceThenNoExceptionIsThrown()
+    public void givenEmptyFlagsWhenRemoveWhiteSpaceIsValidWithOutIgnoreWhiteSpaceThenNoExceptionIsThrown()
             throws Exception {
         qParser.removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
@@ -499,32 +499,32 @@ public class QueryParserTest {
     }
 
     @Test
-    public void WhenParsingALegalStringThenNoExceptionShouldBeThrown() throws Exception {
+    public void whenParsingALegalStringThenNoExceptionShouldBeThrown() throws Exception {
         qParser.parse("abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                 + "0123456789" + "/?:@-._~!$&'()*+,;=");
     }
 
     @Test
-    public void GivenWhiteSpaceIsValidWhenHavingEncodedAndUnEncodedSpacesThenKeysCanBeMerged() throws Exception {
+    public void givenWhiteSpaceIsValidWhenHavingEncodedAndUnEncodedSpacesThenKeysCanBeMerged() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
                 .parse("key =value 1&key%20=value%202");
         assertThat(qParser.getValues("key "), hasItems("value 1", "value 2"));
     }
 
     @Test
-    public void GivenNotEmptyQueryParserWhenAddingFlagsWithEmptyArgumentThenNothingHappens() throws Exception {
+    public void givenNotEmptyQueryParserWhenAddingFlagsWithEmptyArgumentThenNothingHappens() throws Exception {
         qParser.parse("key=value")
                 .addFlags();
     }
 
     @Test
-    public void WhenAddingOnlyIgnoreWhiteSpaceFlagWithoutEffectThenNothingShouldBeThrown() throws Exception {
+    public void whenAddingOnlyIgnoreWhiteSpaceFlagWithoutEffectThenNothingShouldBeThrown() throws Exception {
         qParser.addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
                 .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
     }
 
     @Test
-    public void QueryParserFlagEnumValueOfCheck() {
+    public void queryParserFlagEnumValueOfCheck() {
         assertThat(QueryParser.Flag.valueOf(QueryParser.Flag.IGNORE_WHITE_SPACE.name()),
                 is(QueryParser.Flag.IGNORE_WHITE_SPACE));
         // only for suppressing code coverage tool
