@@ -15,14 +15,14 @@ public class QueryParser {
     static private final String SPACE = " ";
 
     private EnumSet<Flag> flags;
-    private HashMap<String, ArrayList<String>> map;
+    private Map<String, List<String>> map;
 
     /**
      * Instantiates QueryParser without any flags.
      */
     public QueryParser() {
         flags = EnumSet.noneOf(Flag.class);
-        map = new HashMap<>();
+        map = Collections.emptyMap();
     }
 
     /**
@@ -95,7 +95,7 @@ public class QueryParser {
      * @return ignored list
      */
     private static List<String> ignoreWhiteSpace(List<String> values) {
-        ArrayList<String> newValues = new ArrayList<>(values.size());
+        List<String> newValues = new ArrayList<>(values.size());
         for (String str : values)
             newValues.add(str == null ? null : ignoreWhiteSpace(str));
         return newValues;
@@ -118,8 +118,8 @@ public class QueryParser {
      * @param values input value list
      * @return output value list
      */
-    private static ArrayList<String> mergeValues(List<String> values) {
-        ArrayList<String> newValues = new ArrayList<>();
+    private static List<String> mergeValues(List<String> values) {
+        List<String> newValues = new ArrayList<>();
 
         for (String value : values)
             if (!newValues.contains(value))
@@ -145,8 +145,8 @@ public class QueryParser {
      * @param values input value list
      * @return output value list
      */
-    private static ArrayList<String> convertToNull(ArrayList<String> values) {
-        ArrayList<String> newValues = new ArrayList<>(values.size());
+    private static List<String> convertToNull(List<String> values) {
+        List<String> newValues = new ArrayList<>(values.size());
 
         for (String value : values)
             newValues.add(isEmptyOrNull(value) ? null : value);
@@ -174,8 +174,8 @@ public class QueryParser {
      * @param values input values list
      * @return output values list
      */
-    private static ArrayList<String> convertEncodedCharacters(ArrayList<String> values) {
-        ArrayList<String> newValues = new ArrayList<>(values.size());
+    private static List<String> convertEncodedCharacters(List<String> values) {
+        List<String> newValues = new ArrayList<>(values.size());
 
         for (String value : values)
             newValues.add(value == null ? null : convertEncodedCharacters(value));
@@ -349,10 +349,10 @@ public class QueryParser {
      * Removes keys which have empty value list
      */
     private void removeEmptyKeySets() {
-        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        Map<String, List<String>> newMap = new HashMap<>();
         for (String key : getKeySet())
             if (!getValues(key).isEmpty())
-                newMap.put(key, (ArrayList<String>) getValues(key));
+                newMap.put(key, getValues(key));
         map = newMap;
     }
 
@@ -362,6 +362,7 @@ public class QueryParser {
      * @param query query string
      */
     private void parseChecked(String query) {
+        map = new HashMap<>();
         List<String> array = stringSplit(query, '&');
         for (String str : array) {
             if (str.contains("=")) {
@@ -402,13 +403,13 @@ public class QueryParser {
      * Converts encoded characters with % to unencoded characters
      */
     private void convertEncodedCharacters() {
-        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        Map<String, List<String>> newMap = new HashMap<>();
 
         for (String key : getKeySet()) {
             String newKey = convertEncodedCharacters(key);
             if (!newMap.containsKey(newKey))
                 newMap.put(newKey, new ArrayList<String>());
-            ArrayList<String> newValues = convertEncodedCharacters((ArrayList<String>) getValues(key));
+            List<String> newValues = convertEncodedCharacters(getValues(key));
             newMap.get(newKey).addAll(newValues);
         }
 
@@ -458,7 +459,7 @@ public class QueryParser {
      * This Also makes Set of white Spaces between words to a single space.
      */
     private void ignoreWhiteSpace() {
-        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        Map<String, List<String>> newMap = new HashMap<>();
 
         for (String key : getKeySet()) {
             String newKey = ignoreWhiteSpace(key);
@@ -476,7 +477,7 @@ public class QueryParser {
      * Also note that: (null is equal to null) but ("" is not equal to null)
      */
     private void mergeValues() {
-        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        Map<String, List<String>> newMap = new HashMap<>();
         for (String key : getKeySet())
             newMap.put(key, mergeValues(getValues(key)));
         map = newMap;
@@ -487,10 +488,10 @@ public class QueryParser {
      * But does not manipulate keys.
      */
     private void convertToNull() {
-        HashMap<String, ArrayList<String>> newMap = new HashMap<>();
+        Map<String, List<String>> newMap = new HashMap<>();
         for (String key : getKeySet()) {
-            ArrayList<String> values = (ArrayList<String>) getValues(key);
-            ArrayList<String> newValues = convertToNull(values);
+            List<String> values = getValues(key);
+            List<String> newValues = convertToNull(values);
             newMap.put(key, newValues);
         }
         map = newMap;
