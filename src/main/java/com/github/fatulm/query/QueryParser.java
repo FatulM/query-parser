@@ -12,6 +12,8 @@ import java.util.*;
  * and even some times which query string includes encoded characters.
  */
 public class QueryParser {
+    static private final String SPACE = " ";
+
     private EnumSet<Flag> flags;
     private HashMap<String, ArrayList<String>> map;
 
@@ -31,26 +33,26 @@ public class QueryParser {
      * @return list of  parts
      */
     static List<String> stringSplit(String str, char c) {
-        ArrayList<String> output = new ArrayList<>();
-        String splitter = new String(new char[]{c});
+        List<String> output = new ArrayList<>();
 
-        stringSplit0(str, splitter, output);
+        stringSplit0(str, c, output);
 
         return output;
     }
 
     /**
      * @param str      string which we want to split
-     * @param splitter splitter string including only one character
+     * @param splitter splitter character including only one character
      * @param array    list of parts
      */
-    private static void stringSplit0(String str, String splitter, ArrayList<String> array) {
-        if (!str.contains(splitter)) {
+    private static void stringSplit0(String str, char splitter, List<String> array) {
+        int index = str.indexOf(splitter);
+
+        if (index == -1) {
             array.add(str);
             return;
         }
 
-        int index = str.indexOf(splitter);
         String first = (index == 0) ? "" : str.substring(0, index);
         String second = (index == str.length() - 1) ? "" : str.substring(index + 1);
 
@@ -78,11 +80,11 @@ public class QueryParser {
      * @throws IllegalArgumentException when query has invalid structure
      */
     private static void checkStructure(String query) {
-        List<String> array = stringSplit(query, '&');
-        for (String str : array)
-            if (str.contains("="))
-                if (str.indexOf('=') != str.lastIndexOf('='))
-                    throw new IllegalArgumentException("query string has bad structure");
+        // for each part: "([^=&]*=?[^=&]*)" (matches empty)
+        // structure: "(part)(&(part))*"
+
+        if (!query.matches("([^=&]*=?[^=&]*)(&([^=&]*=?[^=&]*))*"))
+            throw new IllegalArgumentException("query string has bad structure");
     }
 
     /**
@@ -92,13 +94,10 @@ public class QueryParser {
      * @param values list of strings
      * @return ignored list
      */
-    private static ArrayList<String> ignoreWhiteSpace(List<String> values) {
+    private static List<String> ignoreWhiteSpace(List<String> values) {
         ArrayList<String> newValues = new ArrayList<>(values.size());
         for (String str : values)
-            if (str == null)
-                newValues.add(null);
-            else
-                newValues.add(ignoreWhiteSpace(str));
+            newValues.add(str == null ? null : ignoreWhiteSpace(str));
         return newValues;
     }
 
@@ -109,15 +108,7 @@ public class QueryParser {
      * @return ignored string
      */
     private static String ignoreWhiteSpace(String str) {
-        while (str.contains("\t"))
-            str = str.replace('\t', ' ');
-
-        while (str.contains("\n"))
-            str = str.replace('\n', ' ');
-
-        while (str.contains("  "))
-            str = str.replace("  ", " ");
-        return str.trim();
+        return str.replaceAll("\\s+", SPACE).trim();
     }
 
 
@@ -127,7 +118,7 @@ public class QueryParser {
      * @param values input value list
      * @return output value list
      */
-    private static ArrayList<String> mergeValues(ArrayList<String> values) {
+    private static ArrayList<String> mergeValues(List<String> values) {
         ArrayList<String> newValues = new ArrayList<>();
 
         for (String value : values)
@@ -139,6 +130,16 @@ public class QueryParser {
 
 
     /**
+     * Checks if a string is null or empty
+     *
+     * @param str input string
+     * @return boolean result of check
+     */
+    private static boolean isEmptyOrNull(String str) {
+        return str == null || str.isEmpty();
+    }
+
+    /**
      * Converts empty values to null for a value list
      *
      * @param values input value list
@@ -148,13 +149,7 @@ public class QueryParser {
         ArrayList<String> newValues = new ArrayList<>(values.size());
 
         for (String value : values)
-            if (value == null) {
-                newValues.add(null);
-            } else if (value.isEmpty()) {
-                newValues.add(null);
-            } else {
-                newValues.add(value);
-            }
+            newValues.add(isEmptyOrNull(value) ? null : value);
 
         return newValues;
     }
@@ -167,11 +162,9 @@ public class QueryParser {
      * @return output string
      */
     private static String convertEncodedCharacters(String str) {
-        while (str.contains("%20"))
-            str = str.replace("%20", " ");
-        return str;
-
         // TODO: not complete + not tested completely
+
+        return str.replace("%20", SPACE);
     }
 
     /**
@@ -185,11 +178,7 @@ public class QueryParser {
         ArrayList<String> newValues = new ArrayList<>(values.size());
 
         for (String value : values)
-            if (value == null) {
-                newValues.add(null);
-            } else {
-                newValues.add(convertEncodedCharacters(value));
-            }
+            newValues.add(value == null ? null : convertEncodedCharacters(value));
 
         return newValues;
     }
@@ -288,28 +277,28 @@ public class QueryParser {
      * In addition to all alphanumerics and percent encoded characters,
      * a query can legally include the following unencoded characters:
      * / ? : @ - . _ ~ ! $ &amp; ' ( ) * + , ; =
+     * This method lets having white space characters
      *
      * @param query query string which is being checked
      * @throws IllegalArgumentException when query has invalid characters
      */
-    private void checkCharacters(String query) {
-        for (char c : query.toCharArray())
-            if (!(
-                    ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
-                            ('0' <= c && c <= '9') || c == '%' ||
-                            c == '/' || c == '?' || c == ':' || c == '@' || c == '-' ||
-                            c == '.' || c == '_' || c == '~' || c == '!' || c == '$' ||
-                            c == '&' || c == '\'' || c == '(' || c == ')' || c == '*' ||
-                            c == '+' || c == ',' || c == ';' || c == '=' ||
-                            c == ' ' || c == '\n' || c == '\t'
-            ))
-                throw new IllegalArgumentException("query string has invalid characters");
-
-        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-            if (query.contains(" ") || query.contains("\n") || query.contains("\t"))
-                throw new IllegalArgumentException("query string contains unencoded white space");
+    private static void checkCharactersGeneral(String query) {
+        if (!query.matches("[\\w\\s.+*\\-%/?:@_~!$&(),;=']*"))
+            throw new IllegalArgumentException("query string has invalid characters");
 
         // TODO: not complete + not tested completely
+    }
+
+    /**
+     * This method ensures that a given query string does not have white space
+     * When white space is not valid we use this method
+     *
+     * @param query query string which is being checked
+     * @throws IllegalArgumentException when query has white space characters
+     */
+    private static void checkWhiteSpaceCharacters(String query) {
+        if (!query.matches("[^\\s]*"))
+            throw new IllegalArgumentException("query string contains unencoded white space");
     }
 
     /**
@@ -326,7 +315,11 @@ public class QueryParser {
 
         if (query == null)
             throw new NullPointerException("query string should not be null");
-        checkCharacters(query);
+
+        checkCharactersGeneral(query);
+        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+            checkWhiteSpaceCharacters(query);
+
         checkEncodedCharacters();
         checkStructure(query);
 
@@ -388,6 +381,7 @@ public class QueryParser {
 
     /**
      * Cleans QueryParser
+     *
      * @return this
      */
     public QueryParser clear() {
@@ -470,7 +464,7 @@ public class QueryParser {
             String newKey = ignoreWhiteSpace(key);
             if (!newMap.containsKey(newKey))
                 newMap.put(newKey, new ArrayList<String>());
-            ArrayList<String> newValues = ignoreWhiteSpace(getValues(key));
+            List<String> newValues = ignoreWhiteSpace(getValues(key));
             newMap.get(newKey).addAll(newValues);
         }
 
@@ -484,7 +478,7 @@ public class QueryParser {
     private void mergeValues() {
         HashMap<String, ArrayList<String>> newMap = new HashMap<>();
         for (String key : getKeySet())
-            newMap.put(key, mergeValues((ArrayList<String>) getValues(key)));
+            newMap.put(key, mergeValues(getValues(key)));
         map = newMap;
     }
 
