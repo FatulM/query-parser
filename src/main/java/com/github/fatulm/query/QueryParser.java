@@ -26,6 +26,35 @@ public class QueryParser {
     }
 
     /**
+     * Implementation for {@code List}
+     *
+     * @return new {@code List}
+     */
+    private static List<String> ListImpl() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Implementation for {@code List}
+     * This can have fixed length
+     *
+     * @param capacity list capacity
+     * @return new {@code List}
+     */
+    private static List<String> ListImpl(int capacity) {
+        return new ArrayList<>(capacity);
+    }
+
+    /**
+     * Implementation for {@code Map}
+     *
+     * @return new {@code Map}
+     */
+    private static Map<String, List<String>> MapImpl() {
+        return new HashMap<>();
+    }
+
+    /**
      * has some differences with {@link String#split(String)}
      *
      * @param str string which we want to split
@@ -33,7 +62,7 @@ public class QueryParser {
      * @return list of  parts
      */
     static List<String> stringSplit(String str, char c) {
-        List<String> output = new ArrayList<>();
+        List<String> output = ListImpl();
 
         stringSplit0(str, c, output);
 
@@ -95,7 +124,7 @@ public class QueryParser {
      * @return ignored list
      */
     private static List<String> ignoreWhiteSpace(List<String> values) {
-        List<String> newValues = new ArrayList<>(values.size());
+        List<String> newValues = ListImpl(values.size());
         for (String str : values)
             newValues.add(str == null ? null : ignoreWhiteSpace(str));
         return newValues;
@@ -119,7 +148,7 @@ public class QueryParser {
      * @return output value list
      */
     private static List<String> mergeValues(List<String> values) {
-        List<String> newValues = new ArrayList<>();
+        List<String> newValues = ListImpl();
 
         for (String value : values)
             if (!newValues.contains(value))
@@ -146,7 +175,7 @@ public class QueryParser {
      * @return output value list
      */
     private static List<String> convertToNull(List<String> values) {
-        List<String> newValues = new ArrayList<>(values.size());
+        List<String> newValues = ListImpl(values.size());
 
         for (String value : values)
             newValues.add(isEmptyOrNull(value) ? null : value);
@@ -175,7 +204,7 @@ public class QueryParser {
      * @return output values list
      */
     private static List<String> convertEncodedCharacters(List<String> values) {
-        List<String> newValues = new ArrayList<>(values.size());
+        List<String> newValues = ListImpl(values.size());
 
         for (String value : values)
             newValues.add(value == null ? null : convertEncodedCharacters(value));
@@ -209,6 +238,228 @@ public class QueryParser {
     private static void checkWhiteSpaceCharacters(String query) {
         if (!query.matches("[^\\s]*"))
             throw new IllegalArgumentException("query string contains unencoded white space");
+    }
+
+    /**
+     * Removes keys which have empty value collection
+     *
+     * @param map input map
+     * @return processed map
+     */
+    private static Map<String, List<String>> removeKeysWithEmptyValue(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+        for (String key : map.keySet())
+            if (!map.get(key).isEmpty())
+                newMap.put(key, map.get(key));
+        return newMap;
+    }
+
+    /**
+     * Converts encoded characters with % to unencoded characters
+     *
+     * @param map input map
+     * @return processed map
+     */
+    private static Map<String, List<String>> convertEncodedCharacters(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+
+        for (String key : map.keySet()) {
+            String newKey = convertEncodedCharacters(key);
+            if (!newMap.containsKey(newKey))
+                newMap.put(newKey, QueryParser.<String>ListImpl());
+            List<String> newValues = convertEncodedCharacters(map.get(key));
+            newMap.get(newKey).addAll(newValues);
+        }
+
+        return newMap;
+    }
+
+    /**
+     * Ignores all white space around key and value items.
+     * Converts fully white space keys and values to empty string.
+     * keys are a set so if after this operation two keys become equal
+     * then values are merged.
+     * This Also makes Set of white Spaces between words to a single space.
+     */
+    private static Map<String, List<String>> ignoreWhiteSpace(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+
+        for (String key : map.keySet()) {
+            String newKey = ignoreWhiteSpace(key);
+            if (!newMap.containsKey(newKey))
+                newMap.put(newKey, QueryParser.<String>ListImpl());
+            List<String> newValues = ignoreWhiteSpace(map.get(key));
+            newMap.get(newKey).addAll(newValues);
+        }
+
+        return newMap;
+    }
+
+    /**
+     * Merges equal values.
+     * Also note that: (null is equal to null) but ("" is not equal to null)
+     */
+    private static Map<String, List<String>> mergeValues(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+        for (String key : map.keySet())
+            newMap.put(key, mergeValues(map.get(key)));
+        return newMap;
+    }
+
+    /**
+     * Converts empty values to null.
+     * But does not manipulate keys.
+     */
+    private static Map<String, List<String>> convertToNull(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+        for (String key : map.keySet()) {
+            List<String> values = map.get(key);
+            List<String> newValues = convertToNull(values);
+            newMap.put(key, newValues);
+        }
+        return newMap;
+    }
+
+    /**
+     * Removes empty string to null mapping
+     * (for example in parse("") we have one)
+     */
+    private static Map<String, List<String>> removeEmptyKeyToNullMaps(Map<String, List<String>> map) {
+        Map<String, List<String>> newMap = MapImpl();
+        for (String key : map.keySet())
+            if (!key.isEmpty()) {
+                newMap.put(key, map.get(key));
+            } else {
+                List<String> list = ListImpl();
+                for (String v : map.get(key))
+                    if (v != null)
+                        list.add(v);
+                newMap.put(key, list);
+            }
+        return newMap;
+    }
+
+    /**
+     * Parses query string after checking all aspects
+     *
+     * @param query query string
+     */
+    private static Map<String, List<String>> parseChecked(String query) {
+        Map<String, List<String>> newMap = MapImpl();
+        List<String> array = stringSplit(query, '&');
+        for (String str : array) {
+            if (str.contains("=")) {
+                List<String> keyValue = stringSplit(str, '=');
+                if (!newMap.containsKey(keyValue.get(0))) {
+                    newMap.put(keyValue.get(0), QueryParser.<String>ListImpl());
+                }
+                newMap.get(keyValue.get(0)).add(keyValue.get(1));
+            } else {
+                if (!newMap.containsKey(str)) {
+                    newMap.put(str, QueryParser.<String>ListImpl());
+                }
+                newMap.get(str).add(null);
+            }
+        }
+        return newMap;
+    }
+
+    /**
+     * Parses query strings.
+     * You can get query String from URI by {@link URI#getQuery()}.
+     * Also note that your string should not include "?"
+     *
+     * @param query query string
+     * @return this
+     */
+    public QueryParser parse(String query) {
+        if (!isEmpty())
+            throw new IllegalStateException("query parser is not empty");
+
+        if (query == null)
+            throw new NullPointerException("query string should not be null");
+
+        checkCharactersGeneral(query);
+        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+            checkWhiteSpaceCharacters(query);
+
+        checkEncodedCharacters();
+        checkStructure(query);
+
+        map = parseChecked(query);
+
+        if (containsFlag(Flag.IGNORE_WHITE_SPACE))
+            map = ignoreWhiteSpace(map);
+
+        map = convertEncodedCharacters(map);
+
+        if (containsFlag(Flag.HARD_IGNORE_WHITE_SPACE))
+            map = ignoreWhiteSpace(map);
+
+        if (containsFlag(Flag.CONVERT_TO_NULL))
+            map = convertToNull(map);
+
+        if (containsFlag(Flag.MERGE_VALUES))
+            map = mergeValues(map);
+
+        map = removeEmptyKeyToNullMaps(map);
+        map = removeKeysWithEmptyValue(map);
+
+        return this;
+    }
+
+    /**
+     * Cleans QueryParser
+     *
+     * @return this
+     */
+    public QueryParser clear() {
+        map.clear();
+        return this;
+    }
+
+    /**
+     * Checks if QueryParser is empty
+     *
+     * @return true if query parser is empty
+     */
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    /**
+     * Checks if QueryParser contains a specified key
+     *
+     * @param key key that we want to check
+     * @return if QueryParser contains the specified key
+     * @throws NullPointerException if key is null
+     */
+    public boolean containsKey(String key) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+        return map.containsKey(key);
+    }
+
+    /**
+     * Returns set of keys
+     *
+     * @return set of keys
+     */
+    public Set<String> getKeySet() {
+        return map.keySet();
+    }
+
+    /**
+     * Returns list of values for a specified key
+     *
+     * @param key the key that we want to get values for that key
+     * @return list of values for a specified key
+     * @throws NullPointerException if key is null
+     */
+    public List<String> getValues(String key) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+        return map.get(key);
     }
 
     /**
@@ -299,216 +550,6 @@ public class QueryParser {
             this.flags.removeAll(Arrays.asList(flags));
 
         return this;
-    }
-
-    /**
-     * Parses query strings.
-     * You can get query String from URI by {@link URI#getQuery()}.
-     * Also note that your string should not include "?"
-     *
-     * @param query query string
-     * @return this
-     */
-    public QueryParser parse(String query) {
-        if (!isEmpty())
-            throw new IllegalStateException("query parser is not empty");
-
-        if (query == null)
-            throw new NullPointerException("query string should not be null");
-
-        checkCharactersGeneral(query);
-        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-            checkWhiteSpaceCharacters(query);
-
-        checkEncodedCharacters();
-        checkStructure(query);
-
-        parseChecked(query);
-
-        if (containsFlag(Flag.IGNORE_WHITE_SPACE))
-            ignoreWhiteSpace();
-
-        convertEncodedCharacters();
-
-        if (containsFlag(Flag.HARD_IGNORE_WHITE_SPACE))
-            ignoreWhiteSpace();
-
-        if (containsFlag(Flag.CONVERT_TO_NULL))
-            convertToNull();
-
-        if (containsFlag(Flag.MERGE_VALUES))
-            mergeValues();
-
-        removeEmptyKeyToNullMaps();
-        removeEmptyKeySets();
-
-        return this;
-    }
-
-    /**
-     * Removes keys which have empty value list
-     */
-    private void removeEmptyKeySets() {
-        Map<String, List<String>> newMap = new HashMap<>();
-        for (String key : getKeySet())
-            if (!getValues(key).isEmpty())
-                newMap.put(key, getValues(key));
-        map = newMap;
-    }
-
-    /**
-     * Parses query string after checking all aspects
-     *
-     * @param query query string
-     */
-    private void parseChecked(String query) {
-        map = new HashMap<>();
-        List<String> array = stringSplit(query, '&');
-        for (String str : array) {
-            if (str.contains("=")) {
-                List<String> keyValue = stringSplit(str, '=');
-                if (!containsKey(keyValue.get(0))) {
-                    map.put(keyValue.get(0), new ArrayList<String>());
-                }
-                getValues(keyValue.get(0)).add(keyValue.get(1));
-            } else {
-                if (!containsKey(str)) {
-                    map.put(str, new ArrayList<String>());
-                }
-                getValues(str).add(null);
-            }
-        }
-    }
-
-    /**
-     * Cleans QueryParser
-     *
-     * @return this
-     */
-    public QueryParser clear() {
-        map.clear();
-        return this;
-    }
-
-    /**
-     * Checks if QueryParser is empty
-     *
-     * @return true if query parser is empty
-     */
-    public boolean isEmpty() {
-        return map.isEmpty();
-    }
-
-    /**
-     * Converts encoded characters with % to unencoded characters
-     */
-    private void convertEncodedCharacters() {
-        Map<String, List<String>> newMap = new HashMap<>();
-
-        for (String key : getKeySet()) {
-            String newKey = convertEncodedCharacters(key);
-            if (!newMap.containsKey(newKey))
-                newMap.put(newKey, new ArrayList<String>());
-            List<String> newValues = convertEncodedCharacters(getValues(key));
-            newMap.get(newKey).addAll(newValues);
-        }
-
-        map = newMap;
-    }
-
-    /**
-     * Checks if QueryParser contains a specified key
-     *
-     * @param key key that we want to check
-     * @return if QueryParser contains the specified key
-     * @throws NullPointerException if key is null
-     */
-    public boolean containsKey(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        return map.containsKey(key);
-    }
-
-    /**
-     * Returns set of keys
-     *
-     * @return set of keys
-     */
-    public Set<String> getKeySet() {
-        return map.keySet();
-    }
-
-    /**
-     * Returns list of values for a specified key
-     *
-     * @param key the key that we want to get values for that key
-     * @return list of values for a specified key
-     * @throws NullPointerException if key is null
-     */
-    public List<String> getValues(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        return map.get(key);
-    }
-
-    /**
-     * Ignores all white space around key and value items.
-     * Converts fully white space keys and values to empty string.
-     * keys are a set so if after this operation two keys become equal
-     * then values are merged.
-     * This Also makes Set of white Spaces between words to a single space.
-     */
-    private void ignoreWhiteSpace() {
-        Map<String, List<String>> newMap = new HashMap<>();
-
-        for (String key : getKeySet()) {
-            String newKey = ignoreWhiteSpace(key);
-            if (!newMap.containsKey(newKey))
-                newMap.put(newKey, new ArrayList<String>());
-            List<String> newValues = ignoreWhiteSpace(getValues(key));
-            newMap.get(newKey).addAll(newValues);
-        }
-
-        map = newMap;
-    }
-
-    /**
-     * Merges equal values.
-     * Also note that: (null is equal to null) but ("" is not equal to null)
-     */
-    private void mergeValues() {
-        Map<String, List<String>> newMap = new HashMap<>();
-        for (String key : getKeySet())
-            newMap.put(key, mergeValues(getValues(key)));
-        map = newMap;
-    }
-
-    /**
-     * Converts empty values to null.
-     * But does not manipulate keys.
-     */
-    private void convertToNull() {
-        Map<String, List<String>> newMap = new HashMap<>();
-        for (String key : getKeySet()) {
-            List<String> values = getValues(key);
-            List<String> newValues = convertToNull(values);
-            newMap.put(key, newValues);
-        }
-        map = newMap;
-    }
-
-    /**
-     * Removes empty string to null mapping
-     * (for example in parse("") we have one)
-     */
-    private void removeEmptyKeyToNullMaps() {
-        for (String key : getKeySet())
-            if (key.isEmpty()) {
-                List<String> values = getValues(key);
-                while (values.contains(null))
-                    values.remove(null);
-                break;
-            }
     }
 
     /**
