@@ -72,7 +72,7 @@ public class QueryParser {
      * Key and value can be empty.
      * And each key can contain multiple values.
      * But your string can not have key=value1=value2,
-     * instead use key=value1&key=value2
+     * instead use key=value1&amp;key=value2
      *
      * @param query query string which is being checked
      * @throws IllegalArgumentException when query has invalid structure
@@ -287,7 +287,7 @@ public class QueryParser {
     /**
      * In addition to all alphanumerics and percent encoded characters,
      * a query can legally include the following unencoded characters:
-     * / ? : @ - . _ ~ ! $ & ' ( ) * + , ; =
+     * / ? : @ - . _ ~ ! $ &amp; ' ( ) * + , ; =
      *
      * @param query query string which is being checked
      * @throws IllegalArgumentException when query has invalid characters
