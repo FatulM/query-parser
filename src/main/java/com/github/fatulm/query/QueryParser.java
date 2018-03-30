@@ -184,6 +184,34 @@ public class QueryParser {
     }
 
     /**
+     * In addition to all alphanumerics and percent encoded characters,
+     * a query can legally include the following unencoded characters:
+     * / ? : @ - . _ ~ ! $ &amp; ' ( ) * + , ; =
+     * This method lets having white space characters
+     *
+     * @param query query string which is being checked
+     * @throws IllegalArgumentException when query has invalid characters
+     */
+    private static void checkCharactersGeneral(String query) {
+        if (!query.matches("[\\w\\s.+*\\-%/?:@_~!$&(),;=']*"))
+            throw new IllegalArgumentException("query string has invalid characters");
+
+        // TODO: not complete + not tested completely
+    }
+
+    /**
+     * This method ensures that a given query string does not have white space
+     * When white space is not valid we use this method
+     *
+     * @param query query string which is being checked
+     * @throws IllegalArgumentException when query has white space characters
+     */
+    private static void checkWhiteSpaceCharacters(String query) {
+        if (!query.matches("[^\\s]*"))
+            throw new IllegalArgumentException("query string contains unencoded white space");
+    }
+
+    /**
      * Checks a specified flag state.
      *
      * @param flag flag which we want to check state
@@ -271,34 +299,6 @@ public class QueryParser {
             this.flags.removeAll(Arrays.asList(flags));
 
         return this;
-    }
-
-    /**
-     * In addition to all alphanumerics and percent encoded characters,
-     * a query can legally include the following unencoded characters:
-     * / ? : @ - . _ ~ ! $ &amp; ' ( ) * + , ; =
-     * This method lets having white space characters
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has invalid characters
-     */
-    private static void checkCharactersGeneral(String query) {
-        if (!query.matches("[\\w\\s.+*\\-%/?:@_~!$&(),;=']*"))
-            throw new IllegalArgumentException("query string has invalid characters");
-
-        // TODO: not complete + not tested completely
-    }
-
-    /**
-     * This method ensures that a given query string does not have white space
-     * When white space is not valid we use this method
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has white space characters
-     */
-    private static void checkWhiteSpaceCharacters(String query) {
-        if (!query.matches("[^\\s]*"))
-            throw new IllegalArgumentException("query string contains unencoded white space");
     }
 
     /**
