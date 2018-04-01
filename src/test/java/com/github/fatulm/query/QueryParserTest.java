@@ -19,9 +19,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 
+@SuppressWarnings("RedundantThrows")
 @RunWith(Theories.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class QueryParserTest {
@@ -430,8 +432,9 @@ public class QueryParserTest {
             throws Exception {
         qParser.addFlags(QueryParser.Flag.MERGE_VALUES)
                 .parse("key=value1&key=value1&key=&key&key=&key&key=value1&anotherKey=anotherValue");
-        List<String> list = Arrays.asList("value1", "", null);
-        assertThat(qParser.getValues("key"), is(list));
+        assertThat(qParser.getValues("key"), containsInAnyOrder("value1", "", null));
+        assertThat(qParser.getValues("key"), hasSize(3));
+
     }
 
     @Test
@@ -478,8 +481,8 @@ public class QueryParserTest {
             throws Exception {
         qParser.addFlags(QueryParser.Flag.CONVERT_TO_NULL, QueryParser.Flag.MERGE_VALUES)
                 .parse("key=value&key=&key&key=value&key=&key");
-        List<String> list = Arrays.asList("value", null);
-        assertThat(qParser.getValues("key"), is(list));
+        assertThat(qParser.getValues("key"), containsInAnyOrder("value", null));
+        assertThat(qParser.getValues("key"), hasSize(2));
     }
 
     @Test

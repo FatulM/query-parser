@@ -148,13 +148,7 @@ public class QueryParser {
      * @return output value list
      */
     private static List<String> mergeValues(List<String> values) {
-        List<String> newValues = ListImpl();
-
-        for (String value : values)
-            if (!newValues.contains(value))
-                newValues.add(value);
-
-        return newValues;
+        return new ArrayList<>(new HashSet<>(values));
     }
 
 
