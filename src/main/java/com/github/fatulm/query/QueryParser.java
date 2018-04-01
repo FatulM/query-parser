@@ -140,6 +140,20 @@ public class QueryParser {
         return str.replaceAll("\\s+", SPACE).trim();
     }
 
+    /**
+     * Ignores white space for a string.
+     * And also trims keys and values
+     *
+     * @param str input string should not be {@code null}
+     * @return ignored string
+     */
+    private static String ignoreWhiteSpaceEx(String str) {
+        return str.replaceAll("\\s+", SPACE)
+                .replaceAll("\\s*=\\s*", "=")
+                .replaceAll("\\s*&\\s*", "&")
+                .trim();
+    }
+
 
     /**
      * Merges equal values for a list of value strings
@@ -380,10 +394,10 @@ public class QueryParser {
         checkEncodedCharacters();
         checkStructure(query);
 
-        map = parseChecked(query);
-
         if (containsFlag(Flag.IGNORE_WHITE_SPACE))
-            map = ignoreWhiteSpace(map);
+            query = ignoreWhiteSpaceEx(query);
+
+        map = parseChecked(query);
 
         map = convertEncodedCharacters(map);
 
