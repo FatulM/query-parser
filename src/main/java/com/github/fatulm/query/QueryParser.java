@@ -2,6 +2,11 @@ package com.github.fatulm.query;
 
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.github.fatulm.query.CollectionUtils.mapImpl;
+import static com.github.fatulm.query.LambdaUtils.*;
+import static com.github.fatulm.query.TextUtils.stringSplit;
 
 
 /**
@@ -23,70 +28,6 @@ public class QueryParser {
     public QueryParser() {
         flags = EnumSet.noneOf(Flag.class);
         map = Collections.emptyMap();
-    }
-
-    /**
-     * Implementation for {@code List}
-     *
-     * @return new {@code List}
-     */
-    private static List<String> ListImpl() {
-        return new ArrayList<>();
-    }
-
-    /**
-     * Implementation for {@code List}
-     * This can have fixed length
-     *
-     * @param capacity list capacity
-     * @return new {@code List}
-     */
-    private static List<String> ListImpl(int capacity) {
-        return new ArrayList<>(capacity);
-    }
-
-    /**
-     * Implementation for {@code Map}
-     *
-     * @return new {@code Map}
-     */
-    private static Map<String, List<String>> MapImpl() {
-        return new HashMap<>();
-    }
-
-    /**
-     * has some differences with {@link String#split(String)}
-     *
-     * @param str string which we want to split
-     * @param c   splitter
-     * @return list of  parts
-     */
-    static List<String> stringSplit(String str, char c) {
-        List<String> output = ListImpl();
-
-        stringSplit0(str, c, output);
-
-        return output;
-    }
-
-    /**
-     * @param str      string which we want to split
-     * @param splitter splitter character including only one character
-     * @param array    list of parts
-     */
-    private static void stringSplit0(String str, char splitter, List<String> array) {
-        int index = str.indexOf(splitter);
-
-        if (index == -1) {
-            array.add(str);
-            return;
-        }
-
-        String first = (index == 0) ? "" : str.substring(0, index);
-        String second = (index == str.length() - 1) ? "" : str.substring(index + 1);
-
-        array.add(first);
-        stringSplit0(second, splitter, array);
     }
 
     /**
@@ -124,10 +65,9 @@ public class QueryParser {
      * @return ignored list
      */
     private static List<String> ignoreWhiteSpace(List<String> values) {
-        List<String> newValues = ListImpl(values.size());
-        for (String str : values)
-            newValues.add(str == null ? null : ignoreWhiteSpace(str));
-        return newValues;
+        return values.stream()
+                .map(elvis(QueryParser::ignoreWhiteSpace))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -162,18 +102,9 @@ public class QueryParser {
      * @return output value list
      */
     private static List<String> mergeValues(List<String> values) {
-        return new ArrayList<>(new HashSet<>(values));
-    }
-
-
-    /**
-     * Checks if a string is null or empty
-     *
-     * @param str input string
-     * @return boolean result of check
-     */
-    private static boolean isEmptyOrNull(String str) {
-        return str == null || str.isEmpty();
+        return values.stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -183,12 +114,9 @@ public class QueryParser {
      * @return output value list
      */
     private static List<String> convertToNull(List<String> values) {
-        List<String> newValues = ListImpl(values.size());
-
-        for (String value : values)
-            newValues.add(isEmptyOrNull(value) ? null : value);
-
-        return newValues;
+        return values.stream()
+                .map(elvis(mapIf(String::isEmpty, toNull())))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -212,12 +140,9 @@ public class QueryParser {
      * @return output values list
      */
     private static List<String> convertEncodedCharacters(List<String> values) {
-        List<String> newValues = ListImpl(values.size());
-
-        for (String value : values)
-            newValues.add(value == null ? null : convertEncodedCharacters(value));
-
-        return newValues;
+        return values.stream()
+                .map(elvis(QueryParser::convertEncodedCharacters))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -255,7 +180,7 @@ public class QueryParser {
      * @return processed map
      */
     private static Map<String, List<String>> removeKeysWithEmptyValue(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
         for (String key : map.keySet())
             if (!map.get(key).isEmpty())
                 newMap.put(key, map.get(key));
@@ -269,12 +194,12 @@ public class QueryParser {
      * @return processed map
      */
     private static Map<String, List<String>> convertEncodedCharacters(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
 
         for (String key : map.keySet()) {
             String newKey = convertEncodedCharacters(key);
             if (!newMap.containsKey(newKey))
-                newMap.put(newKey, QueryParser.<String>ListImpl());
+                newMap.put(newKey, CollectionUtils.listImpl());
             List<String> newValues = convertEncodedCharacters(map.get(key));
             newMap.get(newKey).addAll(newValues);
         }
@@ -290,12 +215,12 @@ public class QueryParser {
      * This Also makes Set of white Spaces between words to a single space.
      */
     private static Map<String, List<String>> ignoreWhiteSpace(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
 
         for (String key : map.keySet()) {
             String newKey = ignoreWhiteSpace(key);
             if (!newMap.containsKey(newKey))
-                newMap.put(newKey, QueryParser.<String>ListImpl());
+                newMap.put(newKey, CollectionUtils.listImpl());
             List<String> newValues = ignoreWhiteSpace(map.get(key));
             newMap.get(newKey).addAll(newValues);
         }
@@ -308,7 +233,7 @@ public class QueryParser {
      * Also note that: (null is equal to null) but ("" is not equal to null)
      */
     private static Map<String, List<String>> mergeValues(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
         for (String key : map.keySet())
             newMap.put(key, mergeValues(map.get(key)));
         return newMap;
@@ -319,7 +244,7 @@ public class QueryParser {
      * But does not manipulate keys.
      */
     private static Map<String, List<String>> convertToNull(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
         for (String key : map.keySet()) {
             List<String> values = map.get(key);
             List<String> newValues = convertToNull(values);
@@ -333,16 +258,15 @@ public class QueryParser {
      * (for example in parse("") we have one)
      */
     private static Map<String, List<String>> removeEmptyKeyToNullMaps(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = MapImpl();
+        Map<String, List<String>> newMap = mapImpl();
         for (String key : map.keySet())
             if (!key.isEmpty()) {
                 newMap.put(key, map.get(key));
             } else {
-                List<String> list = ListImpl();
-                for (String v : map.get(key))
-                    if (v != null)
-                        list.add(v);
-                newMap.put(key, list);
+                newMap.put(key,
+                        map.get(key).stream()
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList()));
             }
         return newMap;
     }
@@ -353,23 +277,29 @@ public class QueryParser {
      * @param query query string
      */
     private static Map<String, List<String>> parseChecked(String query) {
-        Map<String, List<String>> newMap = MapImpl();
-        List<String> array = stringSplit(query, '&');
-        for (String str : array) {
-            if (str.contains("=")) {
-                List<String> keyValue = stringSplit(str, '=');
-                if (!newMap.containsKey(keyValue.get(0))) {
-                    newMap.put(keyValue.get(0), QueryParser.<String>ListImpl());
-                }
-                newMap.get(keyValue.get(0)).add(keyValue.get(1));
-            } else {
-                if (!newMap.containsKey(str)) {
-                    newMap.put(str, QueryParser.<String>ListImpl());
-                }
-                newMap.get(str).add(null);
-            }
-        }
+        Map<String, List<String>> newMap = mapImpl();
+
+        stringSplit(query, '&').stream()
+                .map(str -> stringSplit(str, '='))
+                .map(QueryParser::keyValueOrNullPair)
+                .forEach(pair -> {
+                    newMap.putIfAbsent(pair.get(0), CollectionUtils.listImpl());
+                    newMap.get(pair.get(0)).add(pair.get(1));
+                });
+
         return newMap;
+    }
+
+
+    /**
+     * Maps a list of one item to list of that item and null
+     * Maps a list of two items to itself
+     *
+     * @param list input list
+     * @return output list of key and value
+     */
+    private static List<String> keyValueOrNullPair(List<String> list) {
+        return list.size() == 2 ? list : Arrays.asList(list.get(0), null);
     }
 
     /**

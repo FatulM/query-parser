@@ -3,9 +3,13 @@ apply plugin: 'jacoco'
 apply plugin: 'idea'
 
 compileJava {
-    targetCompatibility = JavaVersion.VERSION_1_7
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    options.setBootClasspath("C:/program files/Java/jre7/lib/rt.jar")
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
+compileTestJava {
+    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_1_8
 }
 
 group 'com.github.fatulm.query'

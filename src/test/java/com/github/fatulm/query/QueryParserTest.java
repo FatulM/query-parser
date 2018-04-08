@@ -394,25 +394,33 @@ public class QueryParserTest {
 
     @Test
     public void splitStringTest() throws Exception {
-        List<String> list = QueryParser.stringSplit("a=b=c", '=');
+        List<String> list = TextUtils.stringSplit("a=b=c", '=');
         List<String> exp = Arrays.asList("a", "b", "c");
-        assertThat(list, is(equalTo(exp)));
+        assertThat(list, is(exp));
 
-        list = QueryParser.stringSplit("", '=');
+        list = TextUtils.stringSplit("", '=');
         exp = Collections.singletonList("");
-        assertThat(list, is(equalTo(exp)));
+        assertThat(list, is(exp));
 
-        list = QueryParser.stringSplit("=", '=');
+        list = TextUtils.stringSplit("=", '=');
         exp = Arrays.asList("", "");
-        assertThat(list, is(equalTo(exp)));
+        assertThat(list, is(exp));
 
-        list = QueryParser.stringSplit("a==", '=');
+        list = TextUtils.stringSplit("a==", '=');
         exp = Arrays.asList("a", "", "");
-        assertThat(list, is(equalTo(exp)));
+        assertThat(list, is(exp));
 
-        list = QueryParser.stringSplit(" =a=", '=');
+        list = TextUtils.stringSplit(" =a=", '=');
         exp = Arrays.asList(" ", "a", "");
-        assertThat(list, is(equalTo(exp)));
+        assertThat(list, is(exp));
+
+        list = TextUtils.stringSplit("hello", '=');
+        exp = Collections.singletonList("hello");
+        assertThat(list, is(exp));
+
+        list = TextUtils.stringSplit("", '=');
+        exp = Collections.singletonList("");
+        assertThat(list, is(exp));
     }
 
     @Test
