@@ -2,11 +2,11 @@ package com.github.fatulm.query;
 
 import java.net.URI;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.github.fatulm.query.CollectionUtils.mapImpl;
 import static com.github.fatulm.query.LambdaUtils.*;
 import static com.github.fatulm.query.TextUtils.stringSplit;
+import static java.util.stream.Collectors.*;
 
 
 /**
@@ -67,7 +67,7 @@ public class QueryParser {
     private static List<String> ignoreWhiteSpace(List<String> values) {
         return values.stream()
                 .map(elvis(QueryParser::ignoreWhiteSpace))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -104,7 +104,7 @@ public class QueryParser {
     private static List<String> mergeValues(List<String> values) {
         return values.stream()
                 .distinct()
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -116,7 +116,7 @@ public class QueryParser {
     private static List<String> convertToNull(List<String> values) {
         return values.stream()
                 .map(elvis(mapIf(String::isEmpty, toNull())))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -142,7 +142,7 @@ public class QueryParser {
     private static List<String> convertEncodedCharacters(List<String> values) {
         return values.stream()
                 .map(elvis(QueryParser::convertEncodedCharacters))
-                .collect(Collectors.toList());
+                .collect(toList());
     }
 
     /**
@@ -181,9 +181,10 @@ public class QueryParser {
      */
     private static Map<String, List<String>> removeKeysWithEmptyValue(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-        for (String key : map.keySet())
-            if (!map.get(key).isEmpty())
-                newMap.put(key, map.get(key));
+        map.forEach((k, vs) -> {
+            if (!vs.isEmpty())
+                newMap.put(k, vs);
+        });
         return newMap;
     }
 
@@ -195,15 +196,11 @@ public class QueryParser {
      */
     private static Map<String, List<String>> convertEncodedCharacters(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-
-        for (String key : map.keySet()) {
-            String newKey = convertEncodedCharacters(key);
-            if (!newMap.containsKey(newKey))
-                newMap.put(newKey, CollectionUtils.listImpl());
-            List<String> newValues = convertEncodedCharacters(map.get(key));
-            newMap.get(newKey).addAll(newValues);
-        }
-
+        map.forEach((k, vs) -> {
+            String newKey = convertEncodedCharacters(k);
+            newMap.putIfAbsent(newKey, CollectionUtils.listImpl());
+            newMap.get(newKey).addAll(convertEncodedCharacters(vs));
+        });
         return newMap;
     }
 
@@ -216,15 +213,11 @@ public class QueryParser {
      */
     private static Map<String, List<String>> ignoreWhiteSpace(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-
-        for (String key : map.keySet()) {
-            String newKey = ignoreWhiteSpace(key);
-            if (!newMap.containsKey(newKey))
-                newMap.put(newKey, CollectionUtils.listImpl());
-            List<String> newValues = ignoreWhiteSpace(map.get(key));
-            newMap.get(newKey).addAll(newValues);
-        }
-
+        map.forEach((k, vs) -> {
+            String newKey = ignoreWhiteSpace(k);
+            newMap.putIfAbsent(newKey, CollectionUtils.listImpl());
+            newMap.get(newKey).addAll(ignoreWhiteSpace(vs));
+        });
         return newMap;
     }
 
@@ -234,8 +227,7 @@ public class QueryParser {
      */
     private static Map<String, List<String>> mergeValues(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-        for (String key : map.keySet())
-            newMap.put(key, mergeValues(map.get(key)));
+        map.forEach((k, vs) -> newMap.put(k, mergeValues(vs)));
         return newMap;
     }
 
@@ -245,11 +237,7 @@ public class QueryParser {
      */
     private static Map<String, List<String>> convertToNull(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-        for (String key : map.keySet()) {
-            List<String> values = map.get(key);
-            List<String> newValues = convertToNull(values);
-            newMap.put(key, newValues);
-        }
+        map.forEach((k, vs) -> newMap.put(k, convertToNull(vs)));
         return newMap;
     }
 
@@ -259,15 +247,13 @@ public class QueryParser {
      */
     private static Map<String, List<String>> removeEmptyKeyToNullMaps(Map<String, List<String>> map) {
         Map<String, List<String>> newMap = mapImpl();
-        for (String key : map.keySet())
-            if (!key.isEmpty()) {
-                newMap.put(key, map.get(key));
-            } else {
-                newMap.put(key,
-                        map.get(key).stream()
-                                .filter(Objects::nonNull)
-                                .collect(Collectors.toList()));
-            }
+        map.forEach((k, vs) -> {
+            if (!k.isEmpty())
+                newMap.put(k, vs);
+            else
+                newMap.put(k,
+                        vs.stream().filter(Objects::nonNull).collect(toList()));
+        });
         return newMap;
     }
 
@@ -277,17 +263,10 @@ public class QueryParser {
      * @param query query string
      */
     private static Map<String, List<String>> parseChecked(String query) {
-        Map<String, List<String>> newMap = mapImpl();
-
-        stringSplit(query, '&').stream()
+        return stringSplit(query, '&').stream()
                 .map(str -> stringSplit(str, '='))
                 .map(QueryParser::keyValueOrNullPair)
-                .forEach(pair -> {
-                    newMap.putIfAbsent(pair.get(0), CollectionUtils.listImpl());
-                    newMap.get(pair.get(0)).add(pair.get(1));
-                });
-
-        return newMap;
+                .collect(groupingBy(Pair::getKey, mapping(Pair::getValue, toList())));
     }
 
 
@@ -298,8 +277,8 @@ public class QueryParser {
      * @param list input list
      * @return output list of key and value
      */
-    private static List<String> keyValueOrNullPair(List<String> list) {
-        return list.size() == 2 ? list : Arrays.asList(list.get(0), null);
+    private static Pair<String, String> keyValueOrNullPair(List<String> list) {
+        return new Pair<>(list.get(0), list.size() == 2 ? list.get(1) : null);
     }
 
     /**

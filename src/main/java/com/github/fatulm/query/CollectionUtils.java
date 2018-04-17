@@ -22,17 +22,6 @@ public class CollectionUtils {
     }
 
     /**
-     * Implementation for {@code List}
-     * This can have fixed length
-     *
-     * @param capacity list capacity
-     * @return new {@code List}
-     */
-    public static List<String> listImpl(int capacity) {
-        return new ArrayList<>(capacity);
-    }
-
-    /**
      * Implementation for {@code Map}
      *
      * @return new {@code Map}
