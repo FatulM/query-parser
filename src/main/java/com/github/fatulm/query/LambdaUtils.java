@@ -41,7 +41,7 @@ public class LambdaUtils {
      * @param <T>       input and output type
      * @return function which returns input or function of input if matches with predicate
      */
-    public static <T> Function<T, T> mapIf(Predicate<T> predicate, Function<T, T> function) {
+    public static <T> Function<T, T> mapIf(Predicate<T> predicate, Function<T, ? extends T> function) {
         return t -> predicate.test(t) ? function.apply(t) : t;
     }
 }

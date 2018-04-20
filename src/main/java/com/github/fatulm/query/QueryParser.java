@@ -2,6 +2,7 @@ package com.github.fatulm.query;
 
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.github.fatulm.query.CollectionUtils.mapImpl;
 import static com.github.fatulm.query.LambdaUtils.*;
@@ -180,12 +181,10 @@ public class QueryParser {
      * @return processed map
      */
     private static Map<String, List<String>> removeKeysWithEmptyValue(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> {
-            if (!vs.isEmpty())
-                newMap.put(k, vs);
-        });
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .filter(e -> !e.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
@@ -226,9 +225,9 @@ public class QueryParser {
      * Also note that: (null is equal to null) but ("" is not equal to null)
      */
     private static Map<String, List<String>> mergeValues(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> newMap.put(k, mergeValues(vs)));
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .collect(toMap(Map.Entry::getKey, e -> mergeValues(e.getValue())));
     }
 
     /**
@@ -236,9 +235,9 @@ public class QueryParser {
      * But does not manipulate keys.
      */
     private static Map<String, List<String>> convertToNull(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> newMap.put(k, convertToNull(vs)));
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .collect(toMap(Map.Entry::getKey, e -> convertToNull(e.getValue())));
     }
 
     /**
@@ -246,15 +245,24 @@ public class QueryParser {
      * (for example in parse("") we have one)
      */
     private static Map<String, List<String>> removeEmptyKeyToNullMaps(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> {
-            if (!k.isEmpty())
-                newMap.put(k, vs);
-            else
-                newMap.put(k,
-                        vs.stream().filter(Objects::nonNull).collect(toList()));
-        });
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .map(Pair::new)
+                .map(mapIf(e -> e.getKey().isEmpty(),
+                        e -> new Pair<>(e.getKey(), filterNonNull(e.getValue()))))
+                .collect(toMap(Pair::getKey, Pair::getValue));
+    }
+
+    /**
+     * filters non null elements in a list
+     *
+     * @param list input list
+     * @return filtered list
+     */
+    private static List<String> filterNonNull(List<String> list) {
+        return list.stream()
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 
     /**
