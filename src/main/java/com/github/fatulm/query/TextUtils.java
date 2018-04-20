@@ -1,8 +1,7 @@
 package com.github.fatulm.query;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.github.fatulm.query.CollectionUtils.listImpl;
 
 /**
  * Some text utilities
@@ -16,7 +15,7 @@ public class TextUtils {
      * @return list of  parts
      */
     public static List<String> stringSplit(String str, char c) {
-        List<String> output = listImpl();
+        List<String> output = new ArrayList<>();
 
         stringSplit0(str, c, output);
 

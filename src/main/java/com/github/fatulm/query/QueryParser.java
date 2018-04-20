@@ -3,8 +3,8 @@ package com.github.fatulm.query;
 import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.github.fatulm.query.CollectionUtils.mapImpl;
 import static com.github.fatulm.query.LambdaUtils.*;
 import static com.github.fatulm.query.TextUtils.stringSplit;
 import static java.util.stream.Collectors.*;
@@ -194,13 +194,11 @@ public class QueryParser {
      * @return processed map
      */
     private static Map<String, List<String>> convertEncodedCharacters(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> {
-            String newKey = convertEncodedCharacters(k);
-            newMap.putIfAbsent(newKey, CollectionUtils.listImpl());
-            newMap.get(newKey).addAll(convertEncodedCharacters(vs));
-        });
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .map(e -> new Pair<>(convertEncodedCharacters(e.getKey()), convertEncodedCharacters(e.getValue())))
+                .collect(toMap(Pair::getKey, Pair::getValue,
+                        (list1, list2) -> Stream.concat(list1.stream(), list2.stream()).collect(toList())));
     }
 
     /**
@@ -211,13 +209,11 @@ public class QueryParser {
      * This Also makes Set of white Spaces between words to a single space.
      */
     private static Map<String, List<String>> ignoreWhiteSpace(Map<String, List<String>> map) {
-        Map<String, List<String>> newMap = mapImpl();
-        map.forEach((k, vs) -> {
-            String newKey = ignoreWhiteSpace(k);
-            newMap.putIfAbsent(newKey, CollectionUtils.listImpl());
-            newMap.get(newKey).addAll(ignoreWhiteSpace(vs));
-        });
-        return newMap;
+        return map.entrySet()
+                .stream()
+                .map(e -> new Pair<>(ignoreWhiteSpace(e.getKey()), ignoreWhiteSpace(e.getValue())))
+                .collect(toMap(Pair::getKey, Pair::getValue,
+                        (list1, list2) -> Stream.concat(list1.stream(), list2.stream()).collect(toList())));
     }
 
     /**
