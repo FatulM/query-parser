@@ -1,6 +1,7 @@
 package com.github.fatulm.query;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Simple immutable Key-Value holder class
@@ -30,18 +31,12 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         this(entry.getKey(), entry.getValue());
     }
 
-    /**
-     * @return key
-     */
-    public K getKey() {
-        return key;
+    public static <T, R, K extends T, V> Function<Pair<K, V>, Pair<R, V>> keyMap(Function<T, R> func) {
+        return pair -> new Pair<>(func.apply(pair.getKey()), pair.getValue());
     }
 
-    /**
-     * @return value
-     */
-    public V getValue() {
-        return value;
+    public static <T, R, K, V extends T> Function<Pair<K, V>, Pair<K, R>> valueMap(Function<T, R> func) {
+        return pair -> new Pair<>(pair.getKey(), func.apply(pair.getValue()));
     }
 
     /**
@@ -50,5 +45,25 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     @Override
     public V setValue(V value) {
         throw new RuntimeException("Operation not supported");
+    }
+
+    public static <T, R, K extends T, V extends T> Function<Pair<K, V>, Pair<R, R>> keyValueMap(Function<T, R> func) {
+        return pair -> new Pair<>(func.apply(pair.getKey()), func.apply(pair.getValue()));
+    }
+
+    /**
+     * @return key
+     */
+    @Override
+    public K getKey() {
+        return key;
+    }
+
+    /**
+     * @return value
+     */
+    @Override
+    public V getValue() {
+        return value;
     }
 }

@@ -5,7 +5,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.fatulm.query.LambdaUtils.*;
+import static com.github.fatulm.query.LambdaUtils.elvis;
+import static com.github.fatulm.query.LambdaUtils.mapIf;
 import static com.github.fatulm.query.TextUtils.stringSplit;
 import static java.util.stream.Collectors.*;
 
@@ -116,9 +117,10 @@ public class QueryParser {
      */
     private static List<String> convertToNull(List<String> values) {
         return values.stream()
-                .map(elvis(mapIf(String::isEmpty, toNull())))
+                .map(TextUtils::convertEmptyStringToNull)
                 .collect(toList());
     }
+
 
     /**
      * Converts encoded characters to unencoded characters.

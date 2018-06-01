@@ -41,4 +41,14 @@ public class TextUtils {
         array.add(first);
         stringSplit0(second, splitter, array);
     }
+
+    /**
+     * if input is not null and is empty converts it to null
+     *
+     * @param str inout string
+     * @return converted string
+     */
+    public static String convertEmptyStringToNull(String str) {
+        return str == null || str.isEmpty() ? null : str;
+    }
 }
