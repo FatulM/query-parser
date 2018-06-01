@@ -22,14 +22,12 @@ public class QueryParser {
     static private final String SPACE = " ";
 
     private EnumSet<Flag> flags;
-    private Map<String, List<String>> map;
 
     /**
      * Instantiates QueryParser without any flags.
      */
     public QueryParser() {
         flags = EnumSet.noneOf(Flag.class);
-        map = Collections.emptyMap();
     }
 
     /**
@@ -288,19 +286,52 @@ public class QueryParser {
     }
 
     /**
+     * @throws NullPointerException if query is null
+     */
+    private static void checkQueryNonNull(String query) {
+        if (query == null)
+            throw new NullPointerException("query string should not be null");
+    }
+
+    /**
+     * @return unmodifiable map with non null keys
+     */
+    private static <K, V> Map<K, V> unmodifiableNonNullKeyMap(Map<K, V> map) {
+        return Collections.unmodifiableMap(new HashMap<K, V>(map) {
+            @Override
+            public V get(Object key) {
+                return super.get(requireKeyNonNull(key));
+            }
+
+            @Override
+            public boolean containsKey(Object key) {
+                return super.containsKey(requireKeyNonNull(key));
+            }
+        });
+    }
+
+    /**
+     * @return itself
+     * @throws NullPointerException if key is null
+     */
+    private static Object requireKeyNonNull(Object key) {
+        if (key == null)
+            throw new NullPointerException("key can not be null");
+        return key;
+    }
+
+    /**
      * Parses query strings.
      * You can get query String from URI by {@link URI#getQuery()}.
      * Also note that your string should not include "?"
      *
      * @param query query string
-     * @return this
+     * @return map of queries
      */
-    public QueryParser parse(String query) {
-        if (!isEmpty())
-            throw new IllegalStateException("query parser is not empty");
+    public Map<String, List<String>> parse(String query) {
+        Map<String, List<String>> map;
 
-        if (query == null)
-            throw new NullPointerException("query string should not be null");
+        checkQueryNonNull(query);
 
         checkCharactersGeneral(query);
         if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
@@ -328,61 +359,7 @@ public class QueryParser {
         map = removeEmptyKeyToNullMaps(map);
         map = removeKeysWithEmptyValue(map);
 
-        return this;
-    }
-
-    /**
-     * Cleans QueryParser
-     *
-     * @return this
-     */
-    public QueryParser clear() {
-        map.clear();
-        return this;
-    }
-
-    /**
-     * Checks if QueryParser is empty
-     *
-     * @return true if query parser is empty
-     */
-    public boolean isEmpty() {
-        return map.isEmpty();
-    }
-
-    /**
-     * Checks if QueryParser contains a specified key
-     *
-     * @param key key that we want to check
-     * @return if QueryParser contains the specified key
-     * @throws NullPointerException if key is null
-     */
-    public boolean containsKey(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        return map.containsKey(key);
-    }
-
-    /**
-     * Returns set of keys
-     *
-     * @return set of keys
-     */
-    public Set<String> getKeySet() {
-        return map.keySet();
-    }
-
-    /**
-     * Returns list of values for a specified key
-     *
-     * @param key the key that we want to get values for that key
-     * @return list of values for a specified key
-     * @throws NullPointerException if key is null
-     */
-    public List<String> getValues(String key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        return map.get(key);
+        return unmodifiableNonNullKeyMap(map);
     }
 
     /**
@@ -414,12 +391,6 @@ public class QueryParser {
             if (flag == null)
                 throw new NullPointerException("flag should not be null");
 
-        if (!isEmpty())
-            if (flags.length > 0)
-                for (Flag flag : flags)
-                    if (!containsFlag(flag))
-                        throw new IllegalStateException("query parser is not empty");
-
         if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
             if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
                 if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
@@ -447,17 +418,6 @@ public class QueryParser {
         for (Flag flag : flags)
             if (flag == null)
                 throw new NullPointerException("flag should not be null");
-
-        if (!isEmpty()) {
-            if (flags.length == 0) {
-                if (!this.flags.isEmpty())
-                    throw new IllegalStateException("query parser is not empty");
-            } else {
-                for (Flag flag : flags)
-                    if (containsFlag(flag))
-                        throw new IllegalStateException("query parser is not empty");
-            }
-        }
 
         if (flags.length != 0)
             if (Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
