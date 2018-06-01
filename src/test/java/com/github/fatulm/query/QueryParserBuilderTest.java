@@ -29,7 +29,7 @@ public class QueryParserBuilderTest {
         ex.expectMessage("flag should not be null");
 
         QueryParser.builder()
-                .removeFlags((QueryParser.Flag[]) null);
+                .removeFlags((QueryParserFlag[]) null);
     }
 
     @Test
@@ -38,7 +38,7 @@ public class QueryParserBuilderTest {
         ex.expectMessage("flag should not be null");
 
         QueryParser.builder()
-                .addFlags((QueryParser.Flag[]) null);
+                .addFlags((QueryParserFlag[]) null);
     }
 
     @Test
@@ -47,10 +47,10 @@ public class QueryParserBuilderTest {
         ex.expectMessage("flag should not be null");
 
         QueryParser.builder()
-                .addFlags(QueryParser.Flag.CONVERT_TO_NULL,
+                .addFlags(QueryParserFlag.CONVERT_TO_NULL,
                         null,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE,
-                        QueryParser.Flag.WHITE_SPACE_IS_VALID);
+                        QueryParserFlag.IGNORE_WHITE_SPACE,
+                        QueryParserFlag.WHITE_SPACE_IS_VALID);
     }
 
     @Test
@@ -59,29 +59,29 @@ public class QueryParserBuilderTest {
         ex.expectMessage("flag should not be null");
 
         QueryParser.builder()
-                .removeFlags(QueryParser.Flag.MERGE_VALUES,
-                        QueryParser.Flag.HARD_IGNORE_WHITE_SPACE,
+                .removeFlags(QueryParserFlag.MERGE_VALUES,
+                        QueryParserFlag.HARD_IGNORE_WHITE_SPACE,
                         null);
     }
 
     @Test
     public void whenAddFlagsThenObjectContainsThem() throws Exception {
-        QueryParser.Builder builder = QueryParser.builder()
-                .addFlags(QueryParser.Flag.MERGE_VALUES,
-                        QueryParser.Flag.CONVERT_TO_NULL);
+        QueryParserBuilder builder = QueryParser.builder()
+                .addFlags(QueryParserFlag.MERGE_VALUES,
+                        QueryParserFlag.CONVERT_TO_NULL);
 
-        assertThat(builder.containsFlag(QueryParser.Flag.CONVERT_TO_NULL), is(true));
-        assertThat(builder.build().containsFlag(QueryParser.Flag.CONVERT_TO_NULL), is(true));
+        assertThat(builder.containsFlag(QueryParserFlag.CONVERT_TO_NULL), is(true));
+        assertThat(builder.build().containsFlag(QueryParserFlag.CONVERT_TO_NULL), is(true));
     }
 
     @Test
     public void givenQueryParserWithSomeFlagsWhenRemovingSomeFlagsThenObjectDoesNotContainThem() throws Exception {
         assertThat(QueryParser.builder()
-                .addFlags(QueryParser.Flag.MERGE_VALUES,
-                        QueryParser.Flag.CONVERT_TO_NULL)
-                .removeFlags(QueryParser.Flag.IGNORE_WHITE_SPACE,
-                        QueryParser.Flag.CONVERT_TO_NULL)
-                .containsFlag(QueryParser.Flag.CONVERT_TO_NULL), is(false));
+                .addFlags(QueryParserFlag.MERGE_VALUES,
+                        QueryParserFlag.CONVERT_TO_NULL)
+                .removeFlags(QueryParserFlag.IGNORE_WHITE_SPACE,
+                        QueryParserFlag.CONVERT_TO_NULL)
+                .containsFlag(QueryParserFlag.CONVERT_TO_NULL), is(false));
     }
 
     @Test
@@ -91,34 +91,34 @@ public class QueryParserBuilderTest {
         ex.expectMessage("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
 
         QueryParser.builder()
-                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+                .addFlags(QueryParserFlag.IGNORE_WHITE_SPACE);
     }
 
     @Test
     public void givenQueryParserWithProperFlagsWhenRemovingOnlyWhiteSpaceValidThenThrows() throws Exception {
-        QueryParser.Builder builder = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE);
+        QueryParserBuilder builder = QueryParser.builder()
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE);
 
         ex.expect(RuntimeException.class);
         ex.expectMessage("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
 
-        builder.removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID);
+        builder.removeFlags(QueryParserFlag.WHITE_SPACE_IS_VALID);
     }
 
     @Test
     public void givenQueryParserWithProperFlagsWhenRemovingProperThenNothingIsThrown() throws Exception {
         QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
-                .removeFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE);
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
+                .removeFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE);
     }
 
     @Test
     public void whenAddingOnlyIgnoreWhiteSpaceFlagWithoutEffectThenNothingShouldBeThrown() throws Exception {
         QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
-                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE);
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID)
+                .addFlags(QueryParserFlag.IGNORE_WHITE_SPACE);
     }
 }

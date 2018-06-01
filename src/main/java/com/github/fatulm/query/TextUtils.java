@@ -6,7 +6,10 @@ import java.util.List;
 /**
  * Some text utilities
  */
-public class TextUtils {
+class TextUtils {
+    private TextUtils() {
+    }
+
     /**
      * has some differences with {@link String#split(String)}
      *

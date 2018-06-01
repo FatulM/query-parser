@@ -161,8 +161,8 @@ public class QueryParserTest {
     public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForKeys()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
                 .build();
 
         assertThat(qp.parse("  key   key  =  value   value    ").containsKey("key key"),
@@ -173,8 +173,8 @@ public class QueryParserTest {
     public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingQueryWithSpaceThenSpaceIsHandledForValues()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
                 .build();
 
         assertThat(qp.parse("  key   key  =  value   value    ").get("key key"),
@@ -185,7 +185,7 @@ public class QueryParserTest {
     public void givenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForKeys()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.HARD_IGNORE_WHITE_SPACE)
                 .build();
 
         assertThat(qp.parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20").keySet(),
@@ -196,7 +196,7 @@ public class QueryParserTest {
     public void givenAQueryParserWithHardIgnoreWhiteSpaceWhenParsingAQueryStringThenEncodedSpaceIsHandledForValues()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.HARD_IGNORE_WHITE_SPACE)
                 .build();
 
         assertThat(qp.parse("%20%20%20key%20%20%20key%20=%20value%20value%20%20").get("key key"),
@@ -211,7 +211,7 @@ public class QueryParserTest {
     @Test
     public void whenParsingAnFullySpacedQueryStringThenKeyShouldNotBeRemoved() throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID)
                 .build();
 
         assertThat(qp.parse(" ").get(" "), hasItem(nullValue()));
@@ -226,8 +226,8 @@ public class QueryParserTest {
     public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingAnFullySpacedQueryStringThenKeyShouldBeRemoved()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.IGNORE_WHITE_SPACE,
-                        QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .addFlags(QueryParserFlag.IGNORE_WHITE_SPACE,
+                        QueryParserFlag.WHITE_SPACE_IS_VALID)
                 .build();
 
         assertThat(qp.parse(" ").keySet().isEmpty(), is(true));
@@ -274,7 +274,7 @@ public class QueryParserTest {
     public void givenAQueryParserWithMergeValuesWhenParsingAQueryWithMultipleValuesForAKeyThenItValuesAreMerged()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.MERGE_VALUES)
+                .addFlags(QueryParserFlag.MERGE_VALUES)
                 .build();
 
         Map<String, List<String>> map =
@@ -288,9 +288,9 @@ public class QueryParserTest {
     public void givenAQueryParserWithMergeValuesAndConvertToNullWhenParsingThenIgnoreWhiteSpaceIsFirst()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.MERGE_VALUES,
-                        QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.MERGE_VALUES,
+                        QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
                 .build();
 
         Map<String, List<String>> map =
@@ -303,9 +303,9 @@ public class QueryParserTest {
     public void givenAQueryParserWithIgnoreAndHardIgnoreWhiteSpaceWhenParsingAQueryThenWhiteSpaceIsHandledWell()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.HARD_IGNORE_WHITE_SPACE,
-                        QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.HARD_IGNORE_WHITE_SPACE,
+                        QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
                 .build();
 
         Map<String, List<String>> map =
@@ -318,7 +318,7 @@ public class QueryParserTest {
     public void givenAQueryParserWithConvertToNullWhenParsingAQueryThenEmptyStringIsConvertedToNull()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.CONVERT_TO_NULL)
+                .addFlags(QueryParserFlag.CONVERT_TO_NULL)
                 .build();
 
         Map<String, List<String>> map = qp.parse("key=");
@@ -330,7 +330,7 @@ public class QueryParserTest {
     public void givenAQueryParserWithConvertToNullWhenParsingAQueryWithEmptyKeyAndValueThenItIsRemoved()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.CONVERT_TO_NULL)
+                .addFlags(QueryParserFlag.CONVERT_TO_NULL)
                 .build();
 
         assertThat(qp.parse("=").isEmpty(), is(true));
@@ -340,8 +340,8 @@ public class QueryParserTest {
     public void givenAQueryParserWithConvertToNullAndMergeValuesWhenParsingAQueryThenConvertShouldBeFirst()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.CONVERT_TO_NULL,
-                        QueryParser.Flag.MERGE_VALUES)
+                .addFlags(QueryParserFlag.CONVERT_TO_NULL,
+                        QueryParserFlag.MERGE_VALUES)
                 .build();
 
         Map<String, List<String>> map = qp.parse("key=value&key=&key&key=value&key=&key");
@@ -353,8 +353,8 @@ public class QueryParserTest {
     public void givenAQueryParserWithIgnoreWhiteSpaceWhenParsingAQueryWithAllTypesOfWhiteSpaceThenItIsHandled()
             throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID,
-                        QueryParser.Flag.IGNORE_WHITE_SPACE)
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID,
+                        QueryParserFlag.IGNORE_WHITE_SPACE)
                 .build();
 
         assertThat(qp.parse(" key\n\n\t key \t \n=value\tvalue\n\n\t ").get("key key"),
@@ -370,7 +370,7 @@ public class QueryParserTest {
     @Test
     public void givenWhiteSpaceIsValidWhenHavingEncodedAndUnEncodedSpacesThenKeysCanBeMerged() throws Exception {
         qp = QueryParser.builder()
-                .addFlags(QueryParser.Flag.WHITE_SPACE_IS_VALID)
+                .addFlags(QueryParserFlag.WHITE_SPACE_IS_VALID)
                 .build();
 
         assertThat(qp.parse("key =value 1&key%20=value%202").get("key "), hasItems("value 1", "value 2"));

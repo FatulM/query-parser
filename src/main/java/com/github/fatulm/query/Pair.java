@@ -10,7 +10,7 @@ import java.util.function.Function;
  * @param <K> Key type
  * @param <V> Value type
  */
-public class Pair<K, V> implements Map.Entry<K, V> {
+class Pair<K, V> implements Map.Entry<K, V> {
     private final K key;
     private final V value;
 

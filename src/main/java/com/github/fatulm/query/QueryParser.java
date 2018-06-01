@@ -1,12 +1,17 @@
 package com.github.fatulm.query;
 
 import java.net.URI;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.github.fatulm.query.LambdaUtils.elvis;
 import static com.github.fatulm.query.LambdaUtils.mapIf;
+import static com.github.fatulm.query.MapUtils.unmodifiableNonNullKeyMap;
+import static com.github.fatulm.query.Preconditions.*;
 import static com.github.fatulm.query.TextUtils.stringSplit;
 import static java.util.stream.Collectors.*;
 
@@ -21,37 +26,13 @@ import static java.util.stream.Collectors.*;
 public class QueryParser {
     static private final String SPACE = " ";
 
-    private EnumSet<Flag> flags;
+    private EnumSet<QueryParserFlag> flags;
 
-    private QueryParser(EnumSet<Flag> flags) {
+    /**
+     * Called from builder
+     */
+    QueryParser(EnumSet<QueryParserFlag> flags) {
         this.flags = flags;
-    }
-
-    /**
-     * Checks encoded characters for bad structure
-     *
-     * @throws IllegalArgumentException if encoded characters have bad structure
-     */
-    private static void checkEncodedCharacters() {
-        // TODO: not complete + not tested
-    }
-
-    /**
-     * Checks query string structure.
-     * Key and value can be empty.
-     * And each key can contain multiple values.
-     * But your string can not have key=value1=value2,
-     * instead use key=value1&amp;key=value2
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has invalid structure
-     */
-    private static void checkStructure(String query) {
-        // for each part: "([^=&]*=?[^=&]*)" (matches empty)
-        // structure: "(part)(&(part))*"
-
-        if (!query.matches("([^=&]*=?[^=&]*)(&([^=&]*=?[^=&]*))*"))
-            throw new IllegalArgumentException("query string has bad structure");
     }
 
     /**
@@ -141,34 +122,6 @@ public class QueryParser {
         return values.stream()
                 .map(elvis(QueryParser::convertEncodedCharacters))
                 .collect(toList());
-    }
-
-    /**
-     * In addition to all alphanumerics and percent encoded characters,
-     * a query can legally include the following unencoded characters:
-     * / ? : @ - . _ ~ ! $ &amp; ' ( ) * + , ; =
-     * This method lets having white space characters
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has invalid characters
-     */
-    private static void checkCharactersGeneral(String query) {
-        if (!query.matches("[\\w\\s.+*\\-%/?:@_~!$&(),;=']*"))
-            throw new IllegalArgumentException("query string has invalid characters");
-
-        // TODO: not complete + not tested completely
-    }
-
-    /**
-     * This method ensures that a given query string does not have white space
-     * When white space is not valid we use this method
-     *
-     * @param query query string which is being checked
-     * @throws IllegalArgumentException when query has white space characters
-     */
-    private static void checkWhiteSpaceCharacters(String query) {
-        if (!query.matches("[^\\s]*"))
-            throw new IllegalArgumentException("query string contains unencoded white space");
     }
 
     /**
@@ -282,39 +235,8 @@ public class QueryParser {
         return new Pair<>(list.get(0), list.size() == 2 ? list.get(1) : null);
     }
 
-    /**
-     * @throws NullPointerException if query is null
-     */
-    private static void checkQueryNonNull(String query) {
-        if (query == null)
-            throw new NullPointerException("query string should not be null");
-    }
-
-    /**
-     * @return unmodifiable map with non null keys
-     */
-    private static <K, V> Map<K, V> unmodifiableNonNullKeyMap(Map<K, V> map) {
-        return Collections.unmodifiableMap(new HashMap<K, V>(map) {
-            @Override
-            public V get(Object key) {
-                return super.get(requireKeyNonNull(key));
-            }
-
-            @Override
-            public boolean containsKey(Object key) {
-                return super.containsKey(requireKeyNonNull(key));
-            }
-        });
-    }
-
-    /**
-     * @return itself
-     * @throws NullPointerException if key is null
-     */
-    private static Object requireKeyNonNull(Object key) {
-        if (key == null)
-            throw new NullPointerException("key can not be null");
-        return key;
+    public static QueryParserBuilder builder() {
+        return new QueryParserBuilder();
     }
 
     /**
@@ -326,31 +248,22 @@ public class QueryParser {
      * @return map of queries
      */
     public Map<String, List<String>> parse(String query) {
-        Map<String, List<String>> map;
+        checkPreconditions(query);
 
-        checkQueryNonNull(query);
-
-        checkCharactersGeneral(query);
-        if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-            checkWhiteSpaceCharacters(query);
-
-        checkEncodedCharacters();
-        checkStructure(query);
-
-        if (containsFlag(Flag.IGNORE_WHITE_SPACE))
+        if (containsFlag(QueryParserFlag.IGNORE_WHITE_SPACE))
             query = ignoreWhiteSpaceEx(query);
 
-        map = parseChecked(query);
+        Map<String, List<String>> map = parseChecked(query);
 
         map = convertEncodedCharacters(map);
 
-        if (containsFlag(Flag.HARD_IGNORE_WHITE_SPACE))
+        if (containsFlag(QueryParserFlag.HARD_IGNORE_WHITE_SPACE))
             map = ignoreWhiteSpace(map);
 
-        if (containsFlag(Flag.CONVERT_TO_NULL))
+        if (containsFlag(QueryParserFlag.CONVERT_TO_NULL))
             map = convertToNull(map);
 
-        if (containsFlag(Flag.MERGE_VALUES))
+        if (containsFlag(QueryParserFlag.MERGE_VALUES))
             map = mergeValues(map);
 
         map = removeEmptyKeyToNullMaps(map);
@@ -360,128 +273,31 @@ public class QueryParser {
     }
 
     /**
+     * checks preconditions
+     *
+     * @param query query
+     */
+    private void checkPreconditions(String query) {
+        checkQueryNonNull(query);
+
+        checkCharactersGeneral(query);
+        if (!containsFlag(QueryParserFlag.WHITE_SPACE_IS_VALID))
+            checkWhiteSpaceCharacters(query);
+
+        checkEncodedCharacters();
+        checkStructure(query);
+    }
+
+    /**
      * Checks a specified flag state.
      *
      * @param flag flag which we want to check state
-     * @return true if <tt>flag</tt> is added before
+     * @return true if <tt>flag</tt> is added in builder
      * @throws NullPointerException if <tt>flag</tt> is null
      */
-    public boolean containsFlag(Flag flag) {
+    public boolean containsFlag(QueryParserFlag flag) {
         if (flag == null)
             throw new NullPointerException("flag should not be null");
         return flags.contains(flag);
-    }
-
-    public static Builder builder() {
-        return new Builder();
-    }
-
-    /**
-     * This enum includes flags which can be used in QueryParser.
-     * <tt>IGNORE_WHITE_SPACE</tt> ignores all white spaces and converts fully
-     * white space or empty strings to empty string (not null string).
-     * This option does NOT guaranty order of the values.
-     * <tt>MERGE_VALUES</tt> merges equal values
-     * <tt>CONVERT_TO_NULL</tt> converts empty strings to null.
-     * <tt>WHITE_SPACE_IS_VALID</tt> indicates that query string can have unencoded white space.
-     * <tt>HARD_IGNORE_WHITE_SPACE</tt> ignores encoded white space too.
-     * If you add all of them they will be execute in the order:
-     * IGNORE_WHITE_SPACE then HARD_IGNORE_WHITE_SPACE then CONVERT_TO_NULL then MERGE_VALUES
-     */
-    public enum Flag {
-        IGNORE_WHITE_SPACE,
-        CONVERT_TO_NULL,
-        MERGE_VALUES,
-        WHITE_SPACE_IS_VALID,
-        HARD_IGNORE_WHITE_SPACE
-    }
-
-    /**
-     * Builder class for QueryParser
-     */
-    public static class Builder {
-        private EnumSet<Flag> flags;
-
-        private Builder() {
-            flags = EnumSet.noneOf(Flag.class);
-        }
-
-        /**
-         * Adds all <tt>flags</tt>.
-         * Should be used before {@link #parse}.
-         *
-         * @param flags the flags that you want to add
-         * @return this
-         * @throws NullPointerException if <tt>flags</tt> are null
-         */
-        public Builder addFlags(Flag... flags) {
-            if (flags == null)
-                throw new NullPointerException("flag should not be null");
-            for (Flag flag : flags)
-                if (flag == null)
-                    throw new NullPointerException("flag should not be null");
-
-            if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
-                if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
-                    if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                        throw new IllegalStateException
-                                ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
-
-            this.flags.addAll(Arrays.asList(flags));
-
-            return this;
-        }
-
-        /**
-         * Removes <tt>flags</tt>
-         * Should be used before {@link #parse}.
-         * If used without argument then removes all flags.
-         *
-         * @param flags the flags that you want to remove
-         * @return this
-         * @throws NullPointerException if <tt>flags</tt> are null
-         */
-        public Builder removeFlags(Flag... flags) {
-            if (flags == null)
-                throw new NullPointerException("flag should not be null");
-            for (Flag flag : flags)
-                if (flag == null)
-                    throw new NullPointerException("flag should not be null");
-
-            if (flags.length != 0)
-                if (Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
-                    if (!Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
-                        if (containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                            if (containsFlag(Flag.IGNORE_WHITE_SPACE))
-                                throw new RuntimeException
-                                        ("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
-
-            if (flags.length == 0)
-                this.flags.clear();
-            else
-                this.flags.removeAll(Arrays.asList(flags));
-
-            return this;
-        }
-
-        /**
-         * Checks a specified flag state.
-         *
-         * @param flag flag which we want to check state
-         * @return true if <tt>flag</tt> is added before
-         * @throws NullPointerException if <tt>flag</tt> is null
-         */
-        public boolean containsFlag(Flag flag) {
-            if (flag == null)
-                throw new NullPointerException("flag should not be null");
-            return flags.contains(flag);
-        }
-
-        /**
-         * @return query parser with added flags
-         */
-        public QueryParser build() {
-            return new QueryParser(flags);
-        }
     }
 }

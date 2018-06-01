@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 /**
  * Some utilities needed for lambdas
  */
-public class LambdaUtils {
+class LambdaUtils {
     private LambdaUtils() {
     }
 
