@@ -23,20 +23,11 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         this.value = value;
     }
 
-
     /**
      * @param entry key and value
      */
     public Pair(Map.Entry<K, V> entry) {
         this(entry.getKey(), entry.getValue());
-    }
-
-    public static <T, R, K extends T, V> Function<Pair<K, V>, Pair<R, V>> keyMap(Function<T, R> func) {
-        return pair -> new Pair<>(func.apply(pair.getKey()), pair.getValue());
-    }
-
-    public static <T, R, K, V extends T> Function<Pair<K, V>, Pair<K, R>> valueMap(Function<T, R> func) {
-        return pair -> new Pair<>(pair.getKey(), func.apply(pair.getValue()));
     }
 
     /**
@@ -45,10 +36,6 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     @Override
     public V setValue(V value) {
         throw new RuntimeException("Operation not supported");
-    }
-
-    public static <T, R, K extends T, V extends T> Function<Pair<K, V>, Pair<R, R>> keyValueMap(Function<T, R> func) {
-        return pair -> new Pair<>(func.apply(pair.getKey()), func.apply(pair.getValue()));
     }
 
     /**
@@ -65,5 +52,17 @@ public class Pair<K, V> implements Map.Entry<K, V> {
     @Override
     public V getValue() {
         return value;
+    }
+
+    public static <T, R, K extends T, V> Function<Pair<K, V>, Pair<R, V>> keyMap(Function<T, R> func) {
+        return pair -> new Pair<>(func.apply(pair.getKey()), pair.getValue());
+    }
+
+    public static <T, R, K, V extends T> Function<Pair<K, V>, Pair<K, R>> valueMap(Function<T, R> func) {
+        return pair -> new Pair<>(pair.getKey(), func.apply(pair.getValue()));
+    }
+
+    public static <T, R, K extends T, V extends T> Function<Pair<K, V>, Pair<R, R>> keyValueMap(Function<T, R> func) {
+        return pair -> new Pair<>(func.apply(pair.getKey()), func.apply(pair.getValue()));
     }
 }

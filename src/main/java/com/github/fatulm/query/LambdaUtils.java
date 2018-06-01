@@ -23,17 +23,6 @@ public class LambdaUtils {
     }
 
     /**
-     * Function returning null
-     *
-     * @param <T> input type
-     * @param <R> output type
-     * @return null
-     */
-    public static <T, R> Function<T, R> toNull() {
-        return t -> null;
-    }
-
-    /**
      * Mapping if input matches with some criteria or returning itself
      *
      * @param predicate predicate for checking if you want to map to something else

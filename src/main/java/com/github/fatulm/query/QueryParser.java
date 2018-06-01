@@ -23,11 +23,8 @@ public class QueryParser {
 
     private EnumSet<Flag> flags;
 
-    /**
-     * Instantiates QueryParser without any flags.
-     */
-    public QueryParser() {
-        flags = EnumSet.noneOf(Flag.class);
+    private QueryParser(EnumSet<Flag> flags) {
+        this.flags = flags;
     }
 
     /**
@@ -375,64 +372,8 @@ public class QueryParser {
         return flags.contains(flag);
     }
 
-    /**
-     * Adds all <tt>flags</tt>.
-     * Should be used before {@link #parse}.
-     *
-     * @param flags the flags that you want to add
-     * @return this
-     * @throws NullPointerException  if <tt>flags</tt> are null
-     * @throws IllegalStateException if query parser is not empty and this manipulation has effect
-     */
-    public QueryParser addFlags(Flag... flags) {
-        if (flags == null)
-            throw new NullPointerException("flag should not be null");
-        for (Flag flag : flags)
-            if (flag == null)
-                throw new NullPointerException("flag should not be null");
-
-        if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
-            if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
-                if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                    throw new IllegalStateException
-                            ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
-
-        this.flags.addAll(Arrays.asList(flags));
-
-        return this;
-    }
-
-    /**
-     * Removes <tt>flags</tt>
-     * Should be used before {@link #parse}.
-     * If used without argument then removes all flags.
-     *
-     * @param flags the flags that you want to remove
-     * @return this
-     * @throws NullPointerException  if <tt>flags</tt> are null
-     * @throws IllegalStateException if query parser is not empty and this manipulation has effect
-     */
-    public QueryParser removeFlags(Flag... flags) {
-        if (flags == null)
-            throw new NullPointerException("flag should not be null");
-        for (Flag flag : flags)
-            if (flag == null)
-                throw new NullPointerException("flag should not be null");
-
-        if (flags.length != 0)
-            if (Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
-                if (!Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
-                    if (containsFlag(Flag.WHITE_SPACE_IS_VALID))
-                        if (containsFlag(Flag.IGNORE_WHITE_SPACE))
-                            throw new RuntimeException
-                                    ("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
-
-        if (flags.length == 0)
-            this.flags.clear();
-        else
-            this.flags.removeAll(Arrays.asList(flags));
-
-        return this;
+    public static Builder builder() {
+        return new Builder();
     }
 
     /**
@@ -453,5 +394,94 @@ public class QueryParser {
         MERGE_VALUES,
         WHITE_SPACE_IS_VALID,
         HARD_IGNORE_WHITE_SPACE
+    }
+
+    /**
+     * Builder class for QueryParser
+     */
+    public static class Builder {
+        private EnumSet<Flag> flags;
+
+        private Builder() {
+            flags = EnumSet.noneOf(Flag.class);
+        }
+
+        /**
+         * Adds all <tt>flags</tt>.
+         * Should be used before {@link #parse}.
+         *
+         * @param flags the flags that you want to add
+         * @return this
+         * @throws NullPointerException if <tt>flags</tt> are null
+         */
+        public Builder addFlags(Flag... flags) {
+            if (flags == null)
+                throw new NullPointerException("flag should not be null");
+            for (Flag flag : flags)
+                if (flag == null)
+                    throw new NullPointerException("flag should not be null");
+
+            if (Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
+                if (!Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
+                    if (!containsFlag(Flag.WHITE_SPACE_IS_VALID))
+                        throw new IllegalStateException
+                                ("can not add IGNORE_WHITE_SPACE without WHITE_SPACE_IS_VALID");
+
+            this.flags.addAll(Arrays.asList(flags));
+
+            return this;
+        }
+
+        /**
+         * Removes <tt>flags</tt>
+         * Should be used before {@link #parse}.
+         * If used without argument then removes all flags.
+         *
+         * @param flags the flags that you want to remove
+         * @return this
+         * @throws NullPointerException if <tt>flags</tt> are null
+         */
+        public Builder removeFlags(Flag... flags) {
+            if (flags == null)
+                throw new NullPointerException("flag should not be null");
+            for (Flag flag : flags)
+                if (flag == null)
+                    throw new NullPointerException("flag should not be null");
+
+            if (flags.length != 0)
+                if (Arrays.asList(flags).contains(Flag.WHITE_SPACE_IS_VALID))
+                    if (!Arrays.asList(flags).contains(Flag.IGNORE_WHITE_SPACE))
+                        if (containsFlag(Flag.WHITE_SPACE_IS_VALID))
+                            if (containsFlag(Flag.IGNORE_WHITE_SPACE))
+                                throw new RuntimeException
+                                        ("Can not remove WHITE_SPACE_IS_VALID and having IGNORE_WHITE_SPACE");
+
+            if (flags.length == 0)
+                this.flags.clear();
+            else
+                this.flags.removeAll(Arrays.asList(flags));
+
+            return this;
+        }
+
+        /**
+         * Checks a specified flag state.
+         *
+         * @param flag flag which we want to check state
+         * @return true if <tt>flag</tt> is added before
+         * @throws NullPointerException if <tt>flag</tt> is null
+         */
+        public boolean containsFlag(Flag flag) {
+            if (flag == null)
+                throw new NullPointerException("flag should not be null");
+            return flags.contains(flag);
+        }
+
+        /**
+         * @return query parser with added flags
+         */
+        public QueryParser build() {
+            return new QueryParser(flags);
+        }
     }
 }
